@@ -1,7 +1,7 @@
 function [ mdl, errors_train, errors_test ] = learn_HBF1_SGD(X_train,Y_train, mdl, iterations,visualize, X_test,Y_test, eta_c,eta_t,eta_beta, sgd_errors)
 %learn_HBF_parameters_1_hidden_later - learns HBF params from Poggio's Paper
-fprintf('sgd_errors = %d',sgd_errors);
-fprintf('visualize = %d',visualize);
+fprintf('sgd_errors = %d \n',sgd_errors);
+fprintf('visualize = %d \n',visualize);
 [~, K] = size(mdl.t);
 [D, N] = size(X_train);
 [D_out, ~] = size(Y_train);
@@ -37,9 +37,12 @@ for i=2:length(errors_test)
     [ f_x, z, a ] = mdl.f(x);
     if eta_beta ~= 0
         [beta_new, dV_dbeta,G_beta, mu_beta] = update_beta_stochastic(f_x,z,a, y, mdl, G_beta,eta_beta);
+        %change_in_beta = mu_beta .* dV_dbeta
     end
     [c_new, dV_dc,G_c, mu_c] = update_c_stochastic(f_x,a, x,y, mdl, G_c,eta_c);
+    %average_change_in_c = mean(mean(dV_dc .* G_c))
     [t_new, dV_dt,G_t, mu_t] = update_t_stochastic(f_x,a, x,y, mdl, G_t,eta_t);
+    %average_change_in_t = mean(mean(dV_dt .* G_t))
 %     %% get changes for c/iter.
 %     change_c_wrt_current_iteration = get_dc_diter(mdl_new.c, c_new); % (L x 1)
 %     changes_c(:,i) = change_c_wrt_current_iteration; % (L x 1)
