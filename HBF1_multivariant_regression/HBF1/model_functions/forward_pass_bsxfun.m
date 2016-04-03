@@ -14,7 +14,7 @@ function [ z, a ] = forward_pass_bsxfun( x, t, beta )
 % z = bsxfun(@plus, sum(x.^2)', sum(t.^2) ) % (K x 1)
 % z_p= z - 2*(t'*x)
 %z = pdist2(x', t').^2; %(1 x K)
-z =  bsxfun(@plus, sum(t.^2)', sum(x.^2) ) - 2*(t'*x);
+z =  bsxfun(@plus, sum(t.^2)', sum(x.^2) ) - 2*(t'*x); % || x - t ||^2 = ||x||^2 + ||t||^2 - 2<x,t>
 %%
 a = exp(-beta*z); %(K x 1)
 end

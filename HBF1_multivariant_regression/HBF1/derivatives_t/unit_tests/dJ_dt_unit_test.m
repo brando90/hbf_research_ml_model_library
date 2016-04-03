@@ -20,12 +20,11 @@ mu_c = 1;
 c = rand(K,D);
 t = rand(D,K);
 beta = 1;
-mdl_params = HBF1_parameters(c,t,beta,lambda);
-mdl = HBF1(mdl_params);
+mdl = HBF1(c,t,beta,lambda);
 %% Dj_dt
 [f_x, z, a] = mdl.f(x);
 % compute dJ_dt_vec
-dV_dt_vec = compute_dV_dt_vec( f_x,a, x,y, mdl_params  );
+dV_dt_vec = compute_dV_dt_vec( f_x,a, x,y, mdl  );
 % compute compute_dJ_dt_loops
 dJ_dt_loops = compute_dJ_dt_loops(f_x,z,x,y,mdl.t,mdl.c);
 % compute dJ_dt_numerical

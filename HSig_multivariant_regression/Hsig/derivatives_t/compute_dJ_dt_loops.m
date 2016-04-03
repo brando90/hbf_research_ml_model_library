@@ -19,6 +19,6 @@ for k=1:K
         dak_dtk =  dak_dzk * x ; %(D+1 x 1)
         dJ_dt_k = dJ_dt_k + dV_dak * dak_dtk;
     end
-    dJ_dt(:,k) = dJ_dt_k;
+    dJ_dt(:,k) = -dJ_dt_k; % TODO - sign goes there?
 end
 end
