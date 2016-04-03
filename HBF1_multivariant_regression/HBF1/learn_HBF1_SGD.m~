@@ -34,9 +34,9 @@ for i=2:length(errors_test)
     x = X_train(:,i_rand);
     y = Y_train(:,i_rand);
     %% get new parameters
-    [ f_x, z, a ] = mdl.f(x);
+    [ f_x, ~, a ] = mdl.f(x);
     if eta_beta ~= 0
-        [beta_new, dV_dbeta,G_beta, mu_beta] = update_beta_stochastic(f_x,z,a, y, mdl, G_beta,eta_beta);
+        [beta_new, dV_dbeta,G_beta, mu_beta] = update_beta_stochastic(f_x,z,a, x,y, mdl, G_beta,eta_beta);
     end
     [c_new, dV_dc,G_c, mu_c] = update_c_stochastic(f_x,a, x,y, mdl, G_c,eta_c);
     [t_new, dV_dt,G_t, mu_t] = update_t_stochastic(f_x,a, x,y, mdl, G_t,eta_t);
@@ -50,19 +50,20 @@ for i=2:length(errors_test)
 %     changes_t(:, i) = change_t_wrt_iteration;
 %     dHf_diter_col_norms = get_norms_col_dHf_dt(dJ_dt);
 %     dHf_dt_mu_t_iter(:, i) = mu_t * dHf_diter_col_norms;
+    %% Calculate current errors
+    if visualize || sgd_errors
+        mdl_new = HBF1(c_new, t_new, mdl.beta, mdl.lambda);
+        current_train_error = compute_Hf_sq_error(X_train,Y_train, mdl_new, mdl.lambda);
+        current_error_test = compute_Hf_sq_error(X_test,Y_test, mdl_new, mdl.lambda);
+        errors_train(i) = current_train_error;
+        errors_test(i) = current_error_test;
+    end
     %% update HBF1 model
     mdl.c = c_new;
     mdl.t = t_new;
     if eta_beta ~= 0
-       mdl.beta = beta_new; 
-    end
-    %% Calculate current errors
-    if visualize || sgd_errors
-        current_train_error = compute_Hf_sq_error(X_train,Y_train, mdl, mdl.lambda);
-        current_error_test = compute_Hf_sq_error(X_test,Y_test, mdl, mdl.lambda);
-        errors_train(i) = current_train_error;
-        errors_test(i) = current_error_test;
-    end
+       mdl.beta = t_new; 
+    end  
 end
 if visualize
     %% plot error progression
