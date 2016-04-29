@@ -1,9 +1,10 @@
 %% get minibatch
 mini_batch_indices = ceil(rand(batchsize,1) * nb_examples);
-Xminibatch =  X(mini_batch_indices,:);
+Xminibatch =  X(mini_batch_indices,:); % (M x D)
+A=Xminibatch;
 %% Forward pass starting from the input
 for layer = 1:nb_layers-1
-    A = max(0, out * neural_net(layer).W + repmat(neural_net(layer).b, batchsize, 1)); 
+    A = max(0, A * neural_net(layer).W + repmat(neural_net(layer).b, batchsize, 1)); 
     prop_computation(layer).A = A;
 end
 %% Back propagation
@@ -33,7 +34,12 @@ for l = nb_layers:step_down_1:2
     % compute delta for previous layer and mutiply by derivative of Sigmoid
     prop_computation(l-1).delta = prop_computation(l).delta * neural_net(l).W' .* prop_computation(L).A .* (1 - prop_computation(L).A);
 end
-% gradient step for all layers
+%% step size
+mod_when = 2000;
+if mod(i, mod_when) == 0
+    step_size = step_size/1.2;
+end
+%% gradient step for all layers
 for j = 1:nb_layers
     neural_net(j).W = neural_net(j).W - step_size * prop_computation(j).dW;
     neural_net(j).b = neural_net(j).b - step_size * prop_computation(j).db;
