@@ -32,7 +32,7 @@ for l = nb_layers:step_down_1:2
     prop_computation(l-1).delta(prop_computation(l-1).A <= 0) = 0;
     %prop_computation(l-1).delta = prop_computation(l).delta * neural_net(l).W' .* (prop_computation(l-1).A > 0); % (M x D^(l-1))
     % compute delta for previous layer and mutiply by derivative of Sigmoid
-    prop_computation(l-1).delta = prop_computation(l).delta * neural_net(l).W' .* prop_computation(L).A .* (1 - prop_computation(L).A);
+    prop_computation(l-1).delta = prop_computation(L).A .* (1 - prop_computation(L).A) .* prop_computation(l).delta * neural_net(l).W';
 end
 %% step size
 mod_when = 2000;
