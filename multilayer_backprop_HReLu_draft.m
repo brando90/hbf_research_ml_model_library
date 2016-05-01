@@ -1,4 +1,4 @@
-function [ mdl, errors_train, errors_test ] = multilayer_backprop_HReLu_draft( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, eta_c, eta_t, sgd_errors )
+function [ neural_net, errors_train, errors_test ] = multilayer_backprop_HReLu_draft( X_train,Y_train, neural_net, iterations,batchsize, X_test,Y_test, eta_c, eta_t, sgd_errors )
 fprintf('sgd_errors = %d',sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
@@ -46,5 +46,4 @@ for i=2:length(errors_test)
         neural_net(j).b = neural_net(j).b - step_size * prop_computation(j).db;
     end
 end
-
 end
