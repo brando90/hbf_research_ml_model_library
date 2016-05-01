@@ -13,8 +13,12 @@ if visualize || sgd_errors
 %     changes_t = zeros(K, iterations);
 %     dHf_dt_mu_t_iter = zeros(K, iterations);
 end
-G_c = ones(K, D_out);
-G_t = ones(D, K);
+if eta_c ~= 0
+    G_c = ones(K, D_out);
+end
+if eta_t ~= 0
+    G_t = ones(D, K);
+end
 if eta_beta ~= 0
     G_beta = ones(1, 1);
 end
@@ -39,10 +43,14 @@ for i=2:length(errors_test)
         [beta_new, dV_dbeta,G_beta, mu_beta] = update_beta_stochastic(f_x,z,a, y, mdl, G_beta,eta_beta);
         %change_in_beta = mu_beta .* dV_dbeta
     end
-    [c_new, dV_dc,G_c, mu_c] = update_c_stochastic(f_x,a, x,y, mdl, G_c,eta_c);
-    %average_change_in_c = mean(mean(dV_dc .* G_c))
-    [t_new, dV_dt,G_t, mu_t] = update_t_stochastic(f_x,a, x,y, mdl, G_t,eta_t);
-    %average_change_in_t = mean(mean(dV_dt .* G_t))
+    if eta_c ~= 0
+        [c_new, dV_dc,G_c, mu_c] = update_c_stochastic(f_x,a, x,y, mdl, G_c,eta_c);
+        %average_change_in_c = mean(mean(dV_dc .* G_c))
+    end
+    if eta_t ~= 0
+        [t_new, dV_dt,G_t, mu_t] = update_t_stochastic(f_x,a, x,y, mdl, G_t,eta_t);
+        %average_change_in_t = mean(mean(dV_dt .* G_t))
+    end
 %     %% get changes for c/iter.
 %     change_c_wrt_current_iteration = get_dc_diter(mdl_new.c, c_new); % (L x 1)
 %     changes_c(:,i) = change_c_wrt_current_iteration; % (L x 1)
@@ -54,8 +62,12 @@ for i=2:length(errors_test)
 %     dHf_diter_col_norms = get_norms_col_dHf_dt(dJ_dt);
 %     dHf_dt_mu_t_iter(:, i) = mu_t * dHf_diter_col_norms;
     %% update HBF1 model
-    mdl.c = c_new;
-    mdl.t = t_new;
+    if eta_c ~= 0
+        mdl.c = c_new; 
+    end
+    if eta_t ~= 0
+        mdl.t = t_new; 
+    end
     if eta_beta ~= 0
        mdl.beta = beta_new; 
     end

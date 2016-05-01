@@ -14,29 +14,19 @@ classdef HReLu
             obj.t = t;
             obj.lambda = lambda;
         end
-        function f_x = predict(obj, x)
-            %returns predicted/classification label
-            [f_x, ~, ~] = obj.f(x);
-        end
         function any_nan_param = any_param_nan(obj)
             %returns true if any parameter is nan
             c_nan = any( isnan(obj.c) );
             t_nan = any( any( any( isnan(obj.t) ) ) );
             any_nan_param = c_nan | t_nan;
         end
-        function [ f_x, z, a ] = f(obj,x)
-            [ f_x, z, a ] = f(x,obj.c,obj.t);
-        end
-        function [f] = predict_data_set(obj, X)
-            %Kern = produce_kernel_matrix_inner_products( X, obj.t,  ); % (N x K)
-            inner_products_xt = X' * obj.t;
-            Kern = inner_products_xt .* ( inner_products_xt >= 0);
-            f = Kern * obj.c; % (N x D)
-            f = f'; % (D x N)
+        function [ F_X, Z, A ] = f(obj,X)
+            Z = X * obj.t;  % (M * K) = (M x D+1) x (D+1 * K)
+            A = max(0, Z); % (M * K)
+            F_X = A * obj.c; % (M x D) = (M * K) * (K * D)
         end
         function [mdl] = gather(obj)
             mdl = HReLu(gather(obj.c), gather(obj.t), gather(obj.lambda));
         end
-    end
-   
+    end 
 end

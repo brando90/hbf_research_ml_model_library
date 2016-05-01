@@ -1,4 +1,4 @@
-function [ mdl, errors_train, errors_test ] = learn_HSig_SGD(X_train,Y_train, mdl, iterations,visualize, X_test,Y_test, eta_c, eta_t, sgd_errors)
+function [ mdl, errors_train, errors_test ] = learn_HReLu_SGD(X_train,Y_train, mdl, iterations,visualize, X_test,Y_test, eta_c, eta_t, sgd_errors)
 %learn_HBF_parameters_1_hidden_later - learns HBF params from Poggio's Paper
 fprintf('sgd_errors = %d',sgd_errors);
 fprintf('visualize = %d',visualize);
