@@ -27,7 +27,7 @@ for i=2:length(errors_test)
 %     fp(2).A = [ones(batchsize,1), fp.A] * mdl.c; % (M x D) = (M * K+1) * (K+1 * D)
     fp = mdl.F(mdl, Xminibatch);
     %% gradients * backprop
-    backprop(2).delta = (2/batchsize) * (fp(2).A - Yminibatch) .* mdl.dAct_ds(fp(2).A); % ( M x D^(L2) )
+    backprop(2).delta = (2/batchsize) * (fp(2).A - Yminibatch) .* mdl(2).dAct_ds(fp(2).A); % ( M x D^(L2) )
     backprop.dJ_dc = [ones(batchsize,1),fp(1).A]' * backprop(2).delta; % (D^(L1)+1 x D^(L2)) = (M x D ^(L1)+1)' x (M x D^(l))
     backprop.(1).delta = mdl.dAct_ds(fp(1).A) .* backprop(2).delta * c'; % (M x D^(L1)) = (M x D^(L1)) .* (M x D^(L2)) x (D^(L1) x D^(L2))'
     backprop.dJ_dt = fp(0).A' * backprop(1).delta; % (D^(L0)+1 x D^(L1)) = (M x D^(L0))' x (M x D^(L1))
