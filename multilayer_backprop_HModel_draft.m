@@ -2,6 +2,7 @@ function [ nn_mdl, errors_train, errors_test ] = multilayer_backprop_HModel_draf
 fprintf('sgd_errors = %d',sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
+L = nb_layers;
 if sgd_errors
     errors_train = zeros(iterations+1,1);
     errors_test = zeros(iterations+1,1);
@@ -17,7 +18,7 @@ for i=2:length(errors_test)
     Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
     A = Xminibatch; % ( M x D+1) = (M x D^(0)+1)
     %% Forward pass starting from the input
-    for l = 1:nb_layers-1
+    for l = 1:L-1
         A = nn_mdl.Act( [ones(batchsize,1), A] * neural_net(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
         fp(l).A = A; % (M x D^(l))
     end
@@ -43,7 +44,6 @@ for i=2:length(errors_test)
     %% gradient step for all layers
     for j = 1:nb_layers
         nn_mdl(j).W = nn_mdl(j).W - step_size * backprop(j).dW;
-        nn_mdl(j).b = nn_mdl(j).b - step_size * backprop(j).db;
     end
 end
 end
