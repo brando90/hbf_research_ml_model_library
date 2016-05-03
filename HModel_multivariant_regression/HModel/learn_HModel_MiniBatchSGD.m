@@ -20,12 +20,11 @@ for i=2:length(errors_test)
     Xminibatch =  X_train(mini_batch_indices,:);
     Yminibatch = Y_train(mini_batch_indices,:);
     %% Forward Pass (fp)
-%     batchsize = size(Xminibatch,1);
-%     fp(0).A = Xminibatch; % (M x D+1)
-%     fp(1).Z = [ones(batchsize,1), fp(0).A] * mdl.t;  % (M * K) = (M x D+1) x (D+1 * K)
-%     fp(1).A = mdl.Act(0, fp(1).Z); % (M * K)
-%     fp(2).A = [ones(batchsize,1), fp.A] * mdl.c; % (M x D) = (M * K+1) * (K+1 * D)
-    fp = mdl.F(mdl, Xminibatch);
+    batchsize = size(Xminibatch,1);
+    fp(0).A = Xminibatch; % (M x D+1)
+    fp(1).Z = [ones(batchsize,1), fp(0).A] * mdl.t;  % (M * K) = (M x D+1) x (D+1 * K)
+    fp(1).A = mdl.Act(0, fp(1).Z); % (M * K)
+    fp(2).A = mdl(2).Act( [ones(batchsize,1), fp.A] * mdl.c ); % (M x D) = (M * K+1) * (K+1 * D)
     %% gradients * backprop
     backprop(2).delta = (2/batchsize) * (fp(2).A - Yminibatch) .* mdl(2).dAct_ds(fp(2).A); % ( M x D^(L2) )
     backprop.dJ_dc = [ones(batchsize,1),fp(1).A]' * backprop(2).delta; % (D^(L1)+1 x D^(L2)) = (M x D ^(L1)+1)' x (M x D^(l))

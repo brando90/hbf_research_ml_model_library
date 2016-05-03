@@ -22,6 +22,8 @@ for i=2:length(errors_test)
         A = nn_mdl.Act( [ones(batchsize,1), A] * neural_net(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
         fp(l).A = A; % (M x D^(l))
     end
+    A = nn_mdl(L).Act( [ones(batchsize,1), A] * neural_net(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
+    fp(L).A = A; % (M x D^(l))
     %% Back propagation
     delta_L = (2 / batchsize)*(fp(L).A - Yminibatch) .* nn_mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     backprop(L).delta = delta_L; % ( M x D^(L) )
