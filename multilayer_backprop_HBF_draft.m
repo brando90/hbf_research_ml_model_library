@@ -34,7 +34,6 @@ for i=2:length(errors_test)
     backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* hbf_net(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     step_down_1=-1;
     for l = L:step_down_1:2
-        % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
         dV_dW_l = fp(l-1).A' * backprop(l).delta; % (D^(l-1)+1 x D^(l)) = (M x D ^(l-1)+1)' x (M x D^(l))
         dV_dW_l = dV_dW_l + lambda * hbf_net(l).W * 0; % TODO regularization
         backprop(l).dW = dV_dW_l; % (D ^(l-1)+1 x D^(l))
