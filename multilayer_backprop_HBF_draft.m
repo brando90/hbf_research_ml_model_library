@@ -23,7 +23,8 @@ for i=2:length(errors_test)
         XX = sum(A .* A, 2); % (M x 1)
         moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
         Z = 2 * hbf_net.beta ( A*hbf_net(l).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
-        fp(l).A = hbf_net.Act(Z); % (M x D^(l))
+        A = hbf_net.Act(Z); % (M x D^(l))
+        fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer
     WW = sum(hbf_net(L).W .* hbf_net(L).W, 1); % ( 1 x D^(l) )
@@ -36,10 +37,10 @@ for i=2:length(errors_test)
     step_down_1=-1;
     for l = L:step_down_1:2
         % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
-        dV_dW_l = fp(l-1).A' * backprop(l).delta; % (D^(l-1)+1 x D^(l)) = (M x D ^(l-1)+1)' x (M x D^(l))
-        dV_dW_l = dV_dW_l + lambda * hbf_net(l).W * 0; % TODO regularization
-        backprop(l).dW = dV_dW_l; % (D ^(l-1)+1 x D^(l))
-
+        dJ_dw_l_part1 = fp(l-1).A' * backprop(l).delta; % (D^(l-1) x D^(l)) = (D^(l-1) x M) x (M x D^(l))
+        dJ_dw_l_part2 = sum( bsxfun( @times, W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ), 3) ; % (D^(l-1) x D^(l)) = sum[ (D^(l-1) x D^(l) x M),3 ]
+        backprop(l).dW = 2 * hbf_net.beta * (dJ_dw_l_part1 - dJ_dw_l_part2); % (D^(l-1) x D^(l))
+        
         % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
         delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x L), 2 ) 
         A_delta = bsxfun(@times, fp(l).A, delta_sum); % (M x L) = (M x L) .* (M x 1)
