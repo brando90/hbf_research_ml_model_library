@@ -34,12 +34,15 @@ for i=2:length(errors_test)
     backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* hbf_net(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     step_down_1=-1;
     for l = L:step_down_1:2
+        % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
         dV_dW_l = fp(l-1).A' * backprop(l).delta; % (D^(l-1)+1 x D^(l)) = (M x D ^(l-1)+1)' x (M x D^(l))
         dV_dW_l = dV_dW_l + lambda * hbf_net(l).W * 0; % TODO regularization
         backprop(l).dW = dV_dW_l; % (D ^(l-1)+1 x D^(l))
 
         % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
-        backprop(l-1).delta = (fp(l-1).A > 0) .* fp(l).delta * hbf_net(l).W'; % (M x D^(l-1)) = (M x D^(l) x ()
+        delta_sum = sum(fp(l).delta ,2);
+        bsxfun(@)
+        backprop(l-1).delta = 2*hbf_net.beta * hbf_net(L).dAct_ds( fp(l-1).A ) . * ( fp(l).delta * hbf_net(l).W' - fp(l).A .* ); % (M x D^(l-1)) = (M x D^(l) x ()
     end
     %% step size
     mod_when = 2000;
