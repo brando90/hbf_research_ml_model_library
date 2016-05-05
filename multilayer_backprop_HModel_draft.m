@@ -22,6 +22,7 @@ for i=2:length(errors_test)
         A = nn_mdl.Act( [ones(batchsize,1), A] * neural_net(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
         fp(l).A = A; % (M x D^(l))
     end
+    % activation for final layer
     A = nn_mdl(L).Act( [ones(batchsize,1), A] * neural_net(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
     fp(L).A = A; % (M x D^(l))
     %% Back propagation

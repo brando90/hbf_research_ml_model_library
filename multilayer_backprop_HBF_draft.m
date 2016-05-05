@@ -21,13 +21,14 @@ for i=2:length(errors_test)
     for l = 1:L-1
         WW = sum(hbf_net(l).W .* hbf_net(l).W, 1); % ( 1 x D^(l) )
         XX = sum(A .* A, 2); % (M x 1)
-        moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) + (1 x D^(l))
+        moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
         Z = 2 * hbf_net.beta ( A*hbf_net(l).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
         fp(l).A = hbf_net.Act(Z); % (M x D^(l))
     end
+    % activation for final layer
     WW = sum(hbf_net(L).W .* hbf_net(L).W, 1); % ( 1 x D^(l) )
     XX = sum(A .* A, 2); % (M x 1)
-    moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) + (1 x D^(l))
+    moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
     Z = 2 * hbf_net.beta ( A*hbf_net(L).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
     fp(L).A = hbf_net(L).Act(Z); % (M x D^(l))
     %% Back propagation
@@ -40,9 +41,9 @@ for i=2:length(errors_test)
         backprop(l).dW = dV_dW_l; % (D ^(l-1)+1 x D^(l))
 
         % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
-        delta_sum = sum(fp(l).delta ,2);
-        bsxfun(@)
-        backprop(l-1).delta = 2*hbf_net.beta * hbf_net(L).dAct_ds( fp(l-1).A ) . * ( fp(l).delta * hbf_net(l).W' - fp(l).A .* ); % (M x D^(l-1)) = (M x D^(l) x ()
+        delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x L), 2 ) 
+        A_delta = bsxfun(@times, fp(l).A, delta_sum); % (M x L) = (M x L) .* (M x 1)
+        backprop(l-1).delta = 2*hbf_net.beta * hbf_netdAct_ds( fp(l-1).A ).*( backprop(l).delta*hbf_net(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
     end
     %% step size
     mod_when = 2000;
