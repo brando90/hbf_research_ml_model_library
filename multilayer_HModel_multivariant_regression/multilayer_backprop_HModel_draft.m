@@ -1,4 +1,4 @@
-function [ mdl, errors_train, errors_test ] = multilayer_backprop_HModel_draft( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, eta_c, eta_t, sgd_errors )
+function [ mdl, errors_train, errors_test ] = multilayer_learn_HModel_MiniBatchSGD( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
 fprintf('sgd_errors = %d',sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
@@ -9,8 +9,12 @@ if sgd_errors
     errors_train(1) = compute_Hf_sq_error(X_train,Y_train, mdl, mdl.lambda);
     errors_test(1) = compute_Hf_sq_error(X_test,Y_test, mdl, mdl.lambda);
 end
-% G_c = ones(K, D_out);
-% G_t = ones(D, K);
+if step_size_params.AdaGrad
+    G_c = ones(K, D_out);
+    G_t = ones(D, K);
+elseif step_size_params.Decaying
+    step_size = step_size_params.step_size; %TODO
+end
 for i=2:length(errors_test)
     %% get minibatch
     mini_batch_indices = ceil(rand(batchsize,1) * N); % M
@@ -40,8 +44,15 @@ for i=2:length(errors_test)
     end
     %% step size
     mod_when = 2000;
-    if mod(i, mod_when) == 0
-        step_size = step_size/1.2;
+    if step_size_params.AdaGrad
+        G_c = G_c + dJ_dc.^2;
+        mu_c = step_size_params.eta_c ./ ( (G_c).^0.5 );
+        G_t = G_t + dJ_dt.^2;
+        mu_t = step_size_params.eta_t ./ ( (G_t).^0.5 );
+    elseif step_size_params.Decaying
+        if mod(i, mod_when) == 0
+            step_size = step_size/1.2;
+        end
     end
     %% gradient step for all layers
     for j = 1:nb_layers
