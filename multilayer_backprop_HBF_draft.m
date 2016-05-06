@@ -37,9 +37,8 @@ for i=2:length(errors_test)
     step_down_1=-1;
     for l = L:step_down_1:2
         % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
-        dJ_dw_l_part1 = fp(l-1).A' * backprop(l).delta; % (D^(l-1) x D^(l)) = (D^(l-1) x M) x (M x D^(l))
-        dJ_dw_l_part2 = sum( bsxfun( @times, W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ), 3) ; % (D^(l-1) x D^(l)) = sum[ (D^(l-1) x D^(l) x M),3 ]
-        backprop(l).dW = 2 * hbf_net.beta * (dJ_dw_l_part1 - dJ_dw_l_part2); % (D^(l-1) x D^(l))
+        T_ijm = bsxfun( @times, W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
+        backprop(l).dW = 2 * hbf_net.beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
         
         % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
         delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x L), 2 ) 
