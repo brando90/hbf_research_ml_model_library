@@ -23,7 +23,7 @@ for i=2:length(errors_test)
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer
-    A = nn_mdl(L).Act( [ones(batchsize,1), A] * neural_net(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
+    A = nn_mdl(L).Act( [ones(batchsize,1), A] * neural_net(L).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
     fp(L).A = A; % (M x D^(l))
     %% Back propagation
     backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* nn_mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))

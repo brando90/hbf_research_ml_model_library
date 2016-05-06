@@ -27,11 +27,16 @@ for i=2:length(errors_test)
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer
-    WW = sum(hbf_net(L).W .* hbf_net(L).W, 1); % ( 1 x D^(l) )
-    XX = sum(A .* A, 2); % (M x 1)
-    moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
-    Z = 2 * hbf_net.beta ( A*hbf_net(L).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
-    fp(L).A = hbf_net(L).Act(Z); % (M x D^(l))
+    if hbf_net(L).Act( ones(1) ) == ones(1) %% if Act func is Identity 
+        A = hbf_net(L).Act( A * neural_net(L).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
+        fp(L).A = A; % (M x D^(l))
+    else
+        WW = sum(hbf_net(L).W .* hbf_net(L).W, 1); % ( 1 x D^(l) )
+        XX = sum(A .* A, 2); % (M x 1)
+        moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
+        Z = 2 * hbf_net.beta ( A*hbf_net(L).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
+        fp(L).A = hbf_net(L).Act(Z); % (M x D^(l))
+    end
     %% Back propagation
     backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* hbf_net(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     step_down_1=-1;
