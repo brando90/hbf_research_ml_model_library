@@ -3,6 +3,9 @@ restoredefaultpath;clear;clc;
 folderName = fullfile('..');
 p = genpath(folderName);
 addpath(p);
+folderName = fullfile('../../common/squared_error_risk');
+p = genpath(folderName);
+addpath(p);
 %% act funcs
 gauss_func = @(S) exp(S);
 dGauss_ds = @(A) A;
@@ -25,6 +28,7 @@ F_func_name = 'F_NO_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
 mdl(1).beta = 0.5;
+mdl(1).lambda = 0;
 for l =1:L-1
     mdl(l).Act = Act;
     mdl(l).dAct_ds = dAct_ds;
@@ -61,10 +65,12 @@ for l = L:step_down_1:2
     backprop(l-1).delta = 2*mdl(1).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
 end
 %% Calcualte numerical derivatives
-
+numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
 %% Compare with true gradient
 for j = 1:L
-    numerical(j).W
+    fprintf('numerical(%d).dW',j);
+    numerical(j).dW
+    fprintf('backprop(%d).dW',j)
     backprop(j).dW
 end
 beep;
