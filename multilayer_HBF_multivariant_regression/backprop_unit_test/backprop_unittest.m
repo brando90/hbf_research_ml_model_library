@@ -64,6 +64,9 @@ for l = L:step_down_1:2
     A_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(L)) .* (M x 1)
     backprop(l-1).delta = 2*mdl(1).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
 end
+l=1;
+T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
+backprop(l).dW = 2 * mdl(1).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 %% Calcualte numerical derivatives
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
 %% Compare with true gradient
