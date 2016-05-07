@@ -24,10 +24,10 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 F_func_name = 'F_NO_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
+mdl(1).beta = 0.5;
 for l =1:L-1
     mdl(l).Act = Act;
     mdl(l).dAct_ds = dAct_ds;
-    mdl.beta = 0.5;
 end
 switch F_func_name
     case 'F_NO_activation_final_layer'
@@ -56,16 +56,15 @@ for l = L:step_down_1:2
     backprop(l).dW = 2 * mdl(1).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 
     % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
-    delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x L), 2 ) 
-    A_delta = bsxfun(@times, fp(l).A, delta_sum); % (M x L) = (M x L) .* (M x 1)
+    delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(L)), 2 ) 
+    A_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(L)) .* (M x 1)
     backprop(l-1).delta = 2*mdl(1).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
 end
 %% Calcualte numerical derivatives
-%TODO
-numerical(2).W = 1;
-numerical(1).W = 1;
+
 %% Compare with true gradient
 for j = 1:L
     numerical(j).W
     backprop(j).dW
 end
+beep;
