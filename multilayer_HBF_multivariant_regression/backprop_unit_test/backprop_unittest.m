@@ -9,6 +9,13 @@ addpath(p);
 %% act funcs
 gauss_func = @(S) exp(S);
 dGauss_ds = @(A) A;
+
+relu_func = @(A) max(0,A);
+dRelu_ds = @(A) A > 0;
+
+sigmoid_func = @(A) sigmf(A, [-1, 0]);
+dSigmoid_ds = @(A) A .* (1 - A);
+
 Identity = @(A) A;
 dIdentity_ds = @(A) ones(size(A));
 %% fake data
@@ -27,8 +34,10 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 F_func_name = 'F_NO_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
-mdl(1).beta = 0.5;
-mdl(1).lambda = 0;
+for l = 1:L
+    mdl(l).beta = 0.5;
+    mdl(l).lambda = 0;
+end
 for l =1:L-1
     mdl(l).Act = Act;
     mdl(l).dAct_ds = dAct_ds;
@@ -57,17 +66,18 @@ step_down_1=-1;
 for l = L:step_down_1:2
     % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
     T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-    backprop(l).dW = 2 * mdl(1).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+    backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 
     % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
     delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(L)), 2 ) 
     A_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(L)) .* (M x 1)
-    backprop(l-1).delta = 2*mdl(1).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
+    backprop(l-1).delta = 2*mdl(l).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
 end
 l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-backprop(l).dW = 2 * mdl(1).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 %% Calcualte numerical derivatives
+eps = 0.001;
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
 %% Compare with true gradient
 for j = 1:L
