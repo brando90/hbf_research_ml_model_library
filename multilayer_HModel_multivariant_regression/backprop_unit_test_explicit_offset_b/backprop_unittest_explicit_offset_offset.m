@@ -25,14 +25,14 @@ M = 10;
 D_0 = 5; % D^(L-2)
 D_1 = 4; % D^(L-1)
 D_2 = 3; % D^(L)
-% 1 later names
+% 1 letter names
 D = D_0;
 K = D_1;
 D_out = D_2;
 %% fake data
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
-L=2;
+L=4;
 batchsize = M;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
@@ -57,13 +57,28 @@ switch F_func_name
     case 'F_activation_final_layer'
         mdl(L).Act = Act;
         mdl(L).dAct_ds = dAct_ds;
-end      
-t = rand(D,K);
-c = rand(K,D_out);
-mdl(1).W = t;
-mdl(1).b = rand(1,K);
-mdl(2).W = c;
-mdl(2).b = rand(1,D_out);
+end
+D_max = D_out;
+D_l_1 = D;
+for l = 1:L
+    if l < L
+        D_l = randi(D_max,1);
+        mdl(l).W = rand(D_l_1,D_l);
+        mdl(l).b = rand(1,D_l);
+        D_l_1 = D_l;
+    else
+        D_l = D_out;
+        mdl(l).W = rand(D_l_1,D_l);
+        mdl(l).b = rand(1,D_l);
+        D_l_1 = D_l;
+    end
+end
+% t = rand(D,K);
+% c = rand(K,D_out);
+% mdl(1).W = t;
+% mdl(1).b = rand(1,K);
+% mdl(2).W = c;
+% mdl(2).b = rand(1,D_out);
 mdl(1).F = @F;
 %% Forward pass
 [fp] = mdl(1).F(mdl, Xminibatch);
@@ -71,7 +86,7 @@ mdl(1).F = @F;
 % compute dJ_dw
 backprop = struct('delta', cell(1,L));
 
-backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
+backprop(L).delta = (2 / batchsize)*(Yminibatch - fp(L).A) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
 step_down_1=-1;
 for l = L:step_down_1:2
     backprop(l).dW = fp(l-1).A' * backprop(l).delta + mdl(l).lambda * mdl(l).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))

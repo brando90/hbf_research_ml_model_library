@@ -7,7 +7,7 @@ fp = struct('A', cell(1,L));
 if isfield(mdl, 'b')
     A = Xminibatch; % ( M x D+1) = (M x D^(0))
     for l = 1:L-1
-        A = mdl(1).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+        A = mdl(l).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer (not special for regression but special for classification as we need to output probability of each class
