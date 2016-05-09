@@ -15,6 +15,8 @@ if step_size_params.AdaGrad
 elseif step_size_params.Decaying
     step_size = step_size_params.step_size; %TODO
 end
+fp = struct('A', cell(1,L));
+backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'db', cell(1,L) );
 for i=2:length(errors_test)
     %% get minibatch
     mini_batch_indices = ceil(rand(batchsize,1) * N); % M

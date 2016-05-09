@@ -1,4 +1,4 @@
-%% HBF
+%% HMODEL
 restoredefaultpath;clear;clc;
 %% import statments
 folderName = fullfile('..');
@@ -33,10 +33,9 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer HBF net
 %mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 F_func_name = 'F_NO_activation_final_layer';
-Act = gauss_func;
-dAct_ds = dGauss_ds;
+Act = sigmoid_func;
+dAct_ds = dSigmoid_ds;
 for l = 1:L
-    mdl(l).beta = 0.5;
     mdl(l).lambda = 0;
 end
 for l =1:L-1
@@ -53,8 +52,8 @@ switch F_func_name
 end      
 mdl(1).F = @F;
 K = 6;
-t = rand(D,K);
-c = rand(K,D_out);
+t = rand(D+1,K);
+c = rand(K+1,D_out);
 mdl(1).W = t;
 mdl(2).W = c;
 %% Forward pass
@@ -62,21 +61,23 @@ mdl(2).W = c;
 %% Calculate derivatives using backprop code
 % compute dJ_dw
 backprop = struct('delta', cell(1,L));
-backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
+backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
 step_down_1=-1;
 for l = L:step_down_1:2
     % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
-    T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-    backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+    dV_dW_l = [ones(batchsize,1), fp(l-1).A]' * backprop(l).delta; % (D^(l-1)+1 x D^(l)) = (M x D ^(l-1)+1)' x (M x D^(l))
+    D_l_1 = size(fp(l-1).A,1); % get value of D^(l-1)
+    dV_dW_l(2:D_l_1+1,:) = dV_dW_l + mdl(l).lambda * mdl(l).W(2:D_l_1+1,:); % regularize everything except the offset
+    backprop(l).dW = dV_dW_l; % (D ^(l-1)+1 x D^(l))
 
     % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
-    delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(L)), 2 ) 
-    A_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(L)) .* (M x 1)
-    backprop(l-1).delta = 2*mdl(l).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
+    backprop(l-1).delta = mdl.dAct_ds( fp(l-1).A ) .* backprop(l).delta * mdl(l).W'; % (M x D^(l-1)) = (M x D^(l) x ()
 end
 l=1;
-T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+dV_dW_l = [ones(batchsize,1), fp(l-1).A]' * backprop(l).delta; % (D^(l-1)+1 x D^(l)) = (M x D ^(l-1)+1)' x (M x D^(l))
+D_l_1 = size(fp(l-1).A,1); % get value of D^(l-1)
+dV_dW_l(2:D_l_1+1,:) = dV_dW_l + lambda * mdl(l).W(2:D_l_1+1,:); % regularize everything except the offset
+backprop(l).dW = dV_dW_l; % (D ^(l-1)+1 x D^(l))
 %% Calcualte numerical derivatives
 eps = 0.001;
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
