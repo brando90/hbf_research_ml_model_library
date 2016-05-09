@@ -22,10 +22,10 @@ for i=2:length(errors_test)
     mini_batch_indices = ceil(rand(batchsize,1) * N);
     Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
     Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
-    A = Xminibatch; % ( M x D+1) = (M x D^(0))
     %% Forward pass starting from the input
+    A = Xminibatch; % ( M x D+1) = (M x D^(0))
     for l = 1:L-1
-        A = mdl.Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+        A = mdl(1).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer (not special for regression but special for classification as we need to output probability of each class
@@ -37,7 +37,7 @@ for i=2:length(errors_test)
     for l = L:step_down_1:2
         backprop(l).dW = fp(l-1).A' * backprop(l).delta + mdl(l).lambda * mdl(l).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
         backprop(l).db = sum(backprop(l).delta, 1); % (1 x D^(l)) = sum(M x D^(l), 1)
-        % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
+        % compute delta for next iteration of backprop (i.e. previous layer)
         backprop(l-1).delta = mdl.dAct_ds(fp(l-1).A) .* backprop(l).delta * mdl(l).W'; % (M x D^(l-1)) = (M x D^(l) x ()
     end
     backprop(1).dW = Xminibatch' * backprop(1).delta + mdl(1).lambda * mdl(1).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
