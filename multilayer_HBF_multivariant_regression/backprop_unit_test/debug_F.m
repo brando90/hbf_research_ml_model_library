@@ -31,7 +31,7 @@ D_out = 3;
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
 L=2;
-batchsize = 5;
+batchsize = 1;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
@@ -66,17 +66,20 @@ mdl(2).W = c;
 [fp] = mdl(1).F(mdl, Xminibatch);
 hbf1 = HBF1(c,t,0.5,0);
 A_L1_hbf1 = zeros(batchsize,K);
-Z = zeros(batchsize,K);
+Z_hbf1 = zeros(batchsize,K);
 A_L2_hbf1 = zeros(batchsize,D_out);
 for m=1:batchsize
-    [f_x, z, a] = hbf1.f(Xminibatch(m,:)');
-    Z(m,:) = z';
-    A_L1_hbf1(m,:) = a';
-    A_L2_hbf1(m,:) = f_x'; 
+    %[f_x, z, a] = hbf1.f(Xminibatch(m,:)');
+    x = Xminibatch(m,:);
+    t=mdl(l).W;
+    z =  -mdl(l).beta*( bsxfun(@plus, sum(t.^2)', sum(x.^2) )' - 2*(x*t) )
+    Z_hbf1(m,:) = z';
+%     A_L1_hbf1(m,:) = a';
+%     A_L2_hbf1(m,:) = f_x'; 
 end
-Z
-fp(1).Z
-A_L1_hbf1
-A_L2_hbf1
-A_L1 = fp(1).A
-A_L2 = fp(2).A
+Z_hbf1
+fp_Z = fp(1).Z
+% A_L1_hbf1
+% A_L2_hbf1
+% A_L1 = fp(1).A
+% A_L2 = fp(2).A
