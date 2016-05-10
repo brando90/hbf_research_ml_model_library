@@ -7,7 +7,7 @@ for l = 1:L-1
     WW = sum(mdl(l).W.^2, 1); % ( 1 x D^(l-1)= sum( (M x D^(l)), 1 )
     XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
     Z = mdl(l).beta*( 2*(A*mdl(l).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
-    %fp(l).Z = Z;
+    fp(l).Z = Z;
     A = mdl(l).Act(Z); % (M x D^(l))
     fp(l).A = A; % (M x D^(l))
 end
@@ -19,7 +19,7 @@ else
     WW = sum(mdl(L).W.^2, 1); % ( 1 x D^(l-1)= sum( (M x D^(l)), 1 )
     XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
     Z = mdl(L).beta*( 2*(A*mdl(L).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
-    %fp(l).Z = Z;
+    fp(l).Z = Z;
     A = mdl(L).Act(Z); % (M x D^(l))
     fp(L).A = A; % (M x D^(l))
 end
