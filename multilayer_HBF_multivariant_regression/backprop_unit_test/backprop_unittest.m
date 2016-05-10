@@ -18,7 +18,7 @@ sigmoid_func = @(A) sigmf(A, [-1, 0]);
 dSigmoid_ds = @(A) A .* (1 - A);
 
 Identity = @(A) A;
-dIdentity_ds = @(A) ones(size(A));
+dIdentity_ds = @(A) ones(1);
 %% fake data
 N = 100;
 D = 5;
@@ -79,7 +79,7 @@ l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
 backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 %% Calcualte numerical derivatives
-eps = 0.001;
+eps = 0.00001;
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
 %% Compare with true gradient
 for j = 1:L
