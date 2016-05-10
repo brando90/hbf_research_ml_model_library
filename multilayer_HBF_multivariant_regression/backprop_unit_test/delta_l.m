@@ -1,4 +1,4 @@
-function [ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, l, Xminibatch)
+function [ delta_l1, delta_l2, delta_l3, delta_l4, delta_l5 ] = delta_l( backprop, mdl, fp, l, Xminibatch)
 l
 [D_l, D_l_p_1] = size( mdl(l+1).W );
 delta_l1 = zeros(1, D_l);
@@ -31,10 +31,4 @@ delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 )
 A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
 backprop(l-1).delta = 2*mdl(l).beta * mdl(l-1).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_x_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
 delta_l5=backprop(l-1).delta;
-%%
-delta_l1
-delta_l2
-delta_l3
-delta_l4
-delta_l5
 end

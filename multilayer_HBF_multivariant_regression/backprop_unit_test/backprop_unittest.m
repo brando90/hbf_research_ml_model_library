@@ -64,7 +64,6 @@ mdl(2).W = c;
 % compute dJ_dw
 backprop = struct('delta', cell(1,L));
 backprop(L).delta = (2 / batchsize)*( Yminibatch - fp(L).A ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
-backprop(L).delta2 = backprop(L).delta;
 step_down_1=-1;
 for l = L:step_down_1:2
     if l == L && mdl(L).Act( ones(1) ) == ones(1) 
@@ -78,14 +77,16 @@ for l = L:step_down_1:2
     % compute delta for next iteration of backprop (i.e. previous layer)
     delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
     A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
-    backprop(l-1).delta = 2*mdl(l).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_x_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
+    backprop(l-1).delta = 2*mdl(l).beta * mdl(l-1).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_x_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
 end
+% [ delta_l1, delta_l2, delta_l3, delta_l4, delta_l5 ] = delta_l( backprop, mdl, fp, l-1, Xminibatch)
+% backprop(l-1).delta
 l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
 backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 
-T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta2',[1,flip( size(backprop(l).delta2) )] ) ); % ( D^(l - 1) x D^(l) x M )
-backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta2 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+%T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta2',[1,flip( size(backprop(l).delta2) )] ) ); % ( D^(l - 1) x D^(l) x M )
+%backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta2 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 %% Calcualte numerical derivatives
 eps = 0.00001;
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
@@ -95,7 +96,7 @@ for j = 1:L
     numerical(j).dW
     fprintf('backprop(%d).dW',j)
     backprop(j).dW
-    fprintf('backprop(%d).dW2',j)
-    backprop(l).dW2
+%     fprintf('backprop(%d).dW2',j)
+%     backprop(l).dW2
 end
 beep;
