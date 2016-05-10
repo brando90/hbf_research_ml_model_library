@@ -79,9 +79,6 @@ for l = L:step_down_1:2
     delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
     A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
     backprop(l-1).delta = 2*mdl(l).beta * mdl(l).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_x_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
-    backprop(l-1).delta
-    [delta_l, delta_l2] = delta_l( backprop, mdl, fp, l-1 )
-    backprop(l-1).delta2 = delta_l;
 end
 l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
