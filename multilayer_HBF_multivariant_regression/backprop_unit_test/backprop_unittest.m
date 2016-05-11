@@ -14,7 +14,7 @@ dGauss_ds = @(A) A;
 relu_func = @(A) max(0,A);
 dRelu_ds = @(A) A > 0;
 
-sigmoid_func = @(A) sigmf(A, [-1, 0]);
+sigmoid_func = @(A) sigmf(A, [1, 0]);
 dSigmoid_ds = @(A) A .* (1 - A);
 
 Identity = @(A) A;

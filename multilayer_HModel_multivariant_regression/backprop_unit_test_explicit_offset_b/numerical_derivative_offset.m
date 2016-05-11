@@ -9,7 +9,7 @@ for l=1:L
         mdl(l).b = mdl(l).b + e;
         err_delta = compute_Hf_sq_error(X,Y, mdl);
         mdl(l).b = mdl(l).b - e;
-        numerical_derivative = (err - err_delta) / eps;
+        numerical_derivative = (err_delta - err) / eps;
         numerical(l).db(d_l) = numerical_derivative;
     end
 end

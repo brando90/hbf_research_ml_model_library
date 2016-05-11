@@ -14,8 +14,11 @@ dGauss_ds = @(A) A;
 relu_func = @(A) max(0,A);
 dRelu_ds = @(A) A > 0;
 
-sigmoid_func = @(A) sigmf(A, [-1, 0]);
+sigmoid_func = @(A) sigmf(A, [1, 0]);
 dSigmoid_ds = @(A) A .* (1 - A);
+
+tanh_func = @(A) tanh(A);
+dTanh_ds = @(A) 1 - A.^2;
 
 Identity = @(A) A;
 dIdentity_ds = @(A) ones(size(A));
@@ -40,9 +43,18 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer HBF net
 %mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 mdl = struct('W', cell(1,L),'b', cell(1,L),'F', cell(1,L), 'Act',cell(1,L),'dAct_ds',cell(1,L),'lambda', cell(1,L));
-F_func_name = 'F_NO_activation_final_layer';
+%F_func_name = 'F_NO_activation_final_layer';
+F_func_name = 'F_activation_final_layer';
 Act = sigmoid_func;
 dAct_ds = dSigmoid_ds;
+%Act = relu_func;
+% dAct_ds = dRelu_ds;
+% Act = relu_func;
+% dAct_ds = dRelu_ds;
+% Act = gauss_func;
+% dAct_ds = dGauss_ds;
+% Act = tanh_func;
+% dAct_ds = dTanh_ds;
 for l = 1:L
     mdl(l).lambda = 0;
 end
@@ -86,7 +98,7 @@ mdl(1).F = @F;
 % compute dJ_dw
 backprop = struct('delta', cell(1,L));
 
-backprop(L).delta = (2 / batchsize)*(Yminibatch - fp(L).A) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
+backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
 step_down_1=-1;
 for l = L:step_down_1:2
     backprop(l).dW = fp(l-1).A' * backprop(l).delta + mdl(l).lambda * mdl(l).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
@@ -97,12 +109,13 @@ end
 backprop(1).dW = Xminibatch' * backprop(1).delta + mdl(1).lambda * mdl(1).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
 backprop(1).db = sum(backprop(1).delta, 1);
 %% Calcualte numerical derivatives
-eps = 0.001;
+eps = 0.0000000001;
 numerical = struct('dW', cell(1,L),'db', cell(1,L));
 numerical = numerical_derivative( numerical, eps, mdl, Xminibatch, Yminibatch);
 numerical = numerical_derivative_offset( numerical, eps, mdl, Xminibatch, Yminibatch);
 %% Compare with true gradient
 for j = 1:L
+    fprintf('------------ L = %d ------------ \n', j)
     fprintf('numerical(%d).dW',j);
     numerical(j).dW
     fprintf('backprop(%d).dW',j)

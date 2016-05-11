@@ -15,6 +15,7 @@ end
 if mdl(L).Act( ones(1) ) == ones(1) %% if Act func is Identity i.e. NO ACTIVATION for final Layer
     A = mdl(L).Act( A * mdl(L).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
     fp(L).A = A; % (M x D^(l))
+    fprintf('NO ACTIVATION \n')
 else
     WW = sum(mdl(L).W.^2, 1); % ( 1 x D^(l-1)= sum( (M x D^(l)), 1 )
     XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
