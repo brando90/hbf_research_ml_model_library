@@ -4,7 +4,7 @@ L = size(mdl,2);
 [D_l_m_1, D_l] = size(mdl(l).W);
 dJ_dW_l = zeros(D_l_m_1, D_l);
 %%
-if l == L
+if l == L && mdl(L).Act( ones(1) ) == ones(1)
     for m =1:M
         x_m = fp(l-1).A(m,:);
         dV_dW_l = zeros(D_l_m_1,D_l);
