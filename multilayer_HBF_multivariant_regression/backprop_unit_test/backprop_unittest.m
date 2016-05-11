@@ -27,7 +27,7 @@ D_out = 3;
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
 L=2;
-batchsize = 1;
+batchsize = 6;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
@@ -90,13 +90,22 @@ backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm,
 %% Calcualte numerical derivatives
 eps = 0.00001;
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
+%%
+dJ = struct('dW', cell(1,L) );
+for l=1:L
+    dJ_dW_l = dJ_dW_debug( mdl, backprop, Xminibatch, fp, l, batchsize );
+    dJ(l).dW = dJ_dW_l;
+end
 %% Compare with true gradient
-for j = 1:L
-    fprintf('numerical(%d).dW',j);
-    numerical(j).dW
-    fprintf('backprop(%d).dW',j)
-    backprop(j).dW
+fprintf('---> Derivatives \n');
+for l = 1:L
+    fprintf('numerical(%d).dW',l);
+    numerical(l).dW
+    fprintf('backprop(%d).dW',l)
+    backprop(l).dW
 %     fprintf('backprop(%d).dW2',j)
 %     backprop(l).dW2
+    fprintf('dJ(%d).dW',l)
+    dJ(l).dW
 end
 beep;
