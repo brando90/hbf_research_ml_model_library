@@ -7,6 +7,9 @@ addpath(p);
 folderName = fullfile('../../common/squared_error_risk');
 p = genpath(folderName);
 addpath(p);
+folderName = fullfile('../../HBF1_multivariant_regression');
+p = genpath(folderName);
+addpath(p);
 %% act funcs
 gauss_func = @(S) exp(S);
 dGauss_ds = @(A) A;
@@ -27,14 +30,13 @@ D_out = 3;
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
 L=2;
-batchsize = 6;
+batchsize = 1;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer HBF net
 mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 F_func_name = 'F_NO_activation_final_layer';
-%F_func_name = 'F_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
 for l = 1:L
@@ -93,12 +95,47 @@ for l=1:L
     dJ_dW_l = dJ_dW_debug( mdl, backprop, Xminibatch, fp, l, batchsize );
     dJ(l).dW = dJ_dW_l;
 end
+%%
+beta = mdl(l).beta;
+lambda = mdl(l).lambda;
+hbf1 = HBF1(c,t,beta,lambda);
+x = Xminibatch';
+y = Yminibatch';
+dJ_dt_numerical = compute_dJ_dt_numerical_derivatives(x,y,c,t,beta,eps);
+dJ_dc_numerical = compute_dJ_dc_numerical_derivatives(x,y,c,t,beta,eps );
+[ f, z, a ] = hbf1.f(x);
+%dJ_dt_vec = compute_dV_dt_vec( f,a, x,y, hbf1  );
+%dJ_dt_loops = compute_dJ_dt_loops(f,z, x,y, t,c);
+dJ_dc_vec = compute_dV_dc_vec( f,a, y );
+%dJ_dc_loops = compute_dJ_dc_loops( f,y,a );
 %% Compare with true gradient
 fprintf('---> Derivatives \n');
 for l = 1:L
     fprintf('------------------------> dJ_dw L = %d \n', l);
     fprintf('numerical(%d).dW',l);
     numerical(l).dW
+    
+    fprintf('hbf1_numerical(%d).dW',l);
+    if l == 1
+        dJ_dt_numerical
+    else
+        dJ_dc_numerical
+    end
+    
+%     fprintf('hbf1_VEC_dJ(%d).dW',l);
+%     if l == 1
+%         dJ_dt_vec
+%     else
+%         dJ_dc_vec
+%     end
+%     
+%     fprintf('hbf1_LOOPS_dJ(%d).dW',l);
+%     if l == 1
+%         dJ_dt_loops
+%     else
+%         %dJ_dc_vec
+%     end
+    
     fprintf('backprop(%d).dW',l)
     backprop(l).dW
 %     fprintf('backprop(%d).dW2',j)

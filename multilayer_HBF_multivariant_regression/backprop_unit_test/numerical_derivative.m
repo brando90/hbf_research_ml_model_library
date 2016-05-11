@@ -11,7 +11,7 @@ for l=1:L
             mdl(l).W = mdl(l).W + e;
             err_delta = compute_Hf_sq_error(X,Y, mdl);
             mdl(l).W = mdl(l).W - e;
-            numerical_derivative = (err - err_delta) / eps;
+            numerical_derivative = (err_delta - err) / eps;
             numerical(l).dW(d_l_1,d_1) = numerical_derivative;
         end
     end

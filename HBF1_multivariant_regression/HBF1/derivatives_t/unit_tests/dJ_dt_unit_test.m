@@ -19,7 +19,7 @@ mu_c = 1;
 %% make mode
 c = rand(K,D);
 t = rand(D,K);
-beta = 1;
+beta = 0.5;
 mdl = HBF1(c,t,beta,lambda);
 %% Dj_dt
 [f_x, z, a] = mdl.f(x);
