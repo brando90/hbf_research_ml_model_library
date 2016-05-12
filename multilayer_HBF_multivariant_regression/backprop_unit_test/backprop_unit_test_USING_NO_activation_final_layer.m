@@ -95,7 +95,7 @@ for l = 1:L
     fprintf('backprop(%d).dW',l)
     backprop(l).dW
     
-    fprintf('backprop(%d).dW2',l)
+    fprintf('backprop_loops(%d).dW',l)
     backprop_loops(l).dW
     
     fprintf('dJ(%d).dW',l)

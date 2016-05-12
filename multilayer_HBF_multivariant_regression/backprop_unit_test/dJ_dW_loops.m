@@ -13,8 +13,8 @@ end
 backprop_loops(1).dW = zeros(D,K);
 for i=1:D
     for j=1:K
-        a_0_ij =2 * mdl(1).beta * ( Xminibatch(i) - mdl(1).W(i,j) );
-        backprop_loops(1).dW(i,j) = backprop_loops(2).delta(j)*a_0_ij;
+        a_0_ij = 2 * mdl(1).beta * ( Xminibatch(i) - mdl(1).W(i,j) );
+        backprop_loops(1).dW(i,j) = backprop_loops(1).delta(j)*a_0_ij;
     end
 end
 end
