@@ -10,12 +10,6 @@ addpath(p);
 % folderName = fullfile('../../HBF1_multivariant_regression');
 % p = genpath(folderName);
 % addpath(p);
-%% act funcs
-gauss_func = @(S) exp(S);
-dGauss_ds = @(A) A;
-
-Identity = @(A) A;
-dIdentity_ds = @(A) ones(1);
 %% fake data
 N = 100;
 M = 1;
@@ -32,57 +26,39 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer-HBF net
 mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 F_func_name = 'F_NO_activation_final_layer';
-%F_func_name = 'F_activation_final_layer';
-Act = gauss_func;
-dAct_ds = dGauss_ds;
-for l = 1:L
-    mdl(l).beta = 0.5;
-    mdl(l).lambda = 0;
-end
-for l =1:L-1
-    mdl(l).Act = Act;
-    mdl(l).dAct_ds = dAct_ds;
-end
-switch F_func_name
-    case 'F_NO_activation_final_layer'
-        mdl(L).Act = Identity;
-        mdl(L).dAct_ds = dIdentity_ds;
-    case 'F_activation_final_layer'
-        mdl(L).Act = Act;
-        mdl(L).dAct_ds = dAct_ds;
-end      
+mdl(L-1).Act = @(S) exp(S);
+mdl(L-1).dAct_ds = @(A) A;
+mdl(L).Act = @(A) A;
+mdl(L).dAct_ds = @(A) ones(1);
+%
 mdl(1).F = @F;
 t = rand(D,K);
 c = rand(K,D_out);
 mdl(1).W = t;
 mdl(2).W = c;
+for l = 1:L
+    mdl(l).beta = 0.5;
+    mdl(l).lambda = 0;
+end
 %% Forward pass
 [fp] = mdl(1).F(mdl, Xminibatch);
 %% Calculate derivatives using backprop code
-% compute dJ_dw
 backprop = struct('delta', cell(1,L));
 backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
-for l = L:-1:2
-    if l == L && mdl(L).Act( ones(1) ) == ones(1) 
-        backprop(l).dW = fp(l-1).A' * backprop(l).delta; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
-    else
-        % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
-        T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-        backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-    end
-    
-    % compute delta for next iteration of backprop (i.e. previous layer)
-    delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
-    A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
-    backprop(l-1).delta = 2*mdl(l).beta * mdl(l-1).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_x_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
-end
-l=1;
-T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+backprop(L).dW = fp(L-1).A' * backprop(L).delta; % l=2 -> (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
+%
+%delta_sum = sum(backprop(L).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
+%A_x_delta = bsxfun(@times, fp(L-1).A, delta_sum); % (M x D^(L)) = (M x D^(l-1)) .* (M x 1)
+%backprop(L-1).delta = 2*mdl(L-1).beta * mdl(L-1).dAct_ds( fp(L-1).A ).*( backprop(L).delta*mdl(L).W' - A_x_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
+backprop(L-1).delta = 2*mdl(L-1).beta * mdl(L-1).dAct_ds( fp(L-1).A ).*( backprop(L).delta*mdl(L).W' - bsxfun(@times, fp(L-1).A, sum(backprop(L).delta ,2)) );
+%
+T_ijm = bsxfun( @times, mdl(L-1).W, reshape(backprop(L-1).delta',[1,flip( size(backprop(L-1).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
+backprop(L-1).dW = 2 * mdl(L-1).beta * ( Xminibatch'*backprop(L-1).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 
-[ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch);
-T_ijm = bsxfun( @times, mdl(l).W, reshape(delta_l1',[1,flip( size(delta_l1) )] ) ); % ( D^(l - 1) x D^(l) x M )
-backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*delta_l1 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+
+% [ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch);
+% T_ijm = bsxfun( @times, mdl(l).W, reshape(delta_l1',[1,flip( size(delta_l1) )] ) ); % ( D^(l - 1) x D^(l) x M )
+% backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*delta_l1 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 %%
 % beta = mdl(l).beta;
 % lambda = mdl(l).lambda;
@@ -134,8 +110,10 @@ for l = 1:L
     
     fprintf('backprop(%d).dW',l)
     backprop(l).dW
-    fprintf('backprop(%d).dW2',l)
-    backprop(l).dW2
+    
+%     fprintf('backprop(%d).dW2',l)
+%     backprop(l).dW2
+    
     fprintf('dJ(%d).dW',l)
     dJ(l).dW
 end

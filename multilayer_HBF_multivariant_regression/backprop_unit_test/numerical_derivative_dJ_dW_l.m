@@ -1,4 +1,4 @@
-function [ numerical ] = numerical_derivative( eps, mdl, X, Y )
+function [ numerical ] = numerical_derivative_dJ_dW_l( eps, mdl, X, Y )
 L = size(mdl,2);
 numerical = struct('dW', cell(1,L) );
 for l=1:L
