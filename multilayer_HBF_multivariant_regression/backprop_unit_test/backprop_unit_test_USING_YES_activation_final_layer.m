@@ -31,7 +31,8 @@ mdl(L-1).dAct_ds = @(A) A;
 mdl(L).Act = @(S) exp(S);
 mdl(L).dAct_ds = @(A) A;
 %
-mdl(1).F = @F;
+%mdl(1).F = @F;
+mdl(1).F = @F_activation_final;
 t = rand(D,K);
 c = rand(K,D_out);
 mdl(1).W = t;

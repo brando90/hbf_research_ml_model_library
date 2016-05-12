@@ -31,7 +31,8 @@ mdl(L-1).dAct_ds = @(A) A;
 mdl(L).Act = @(A) A;
 mdl(L).dAct_ds = @(A) ones(1);
 %
-mdl(1).F = @F;
+%mdl(1).F = @F;
+mdl(1).F = @F_NO_activation_final;
 t = rand(D,K);
 c = rand(K,D_out);
 mdl(1).W = t;
@@ -54,26 +55,22 @@ backprop(L-1).delta = 2*mdl(L-1).beta * mdl(L-1).dAct_ds( fp(L-1).A ).*( backpro
 %
 T_ijm = bsxfun( @times, mdl(L-1).W, reshape(backprop(L-1).delta',[1,flip( size(backprop(L-1).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
 backprop(L-1).dW = 2 * mdl(L-1).beta * ( Xminibatch'*backprop(L-1).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-
-
-% [ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch);
-% T_ijm = bsxfun( @times, mdl(l).W, reshape(delta_l1',[1,flip( size(delta_l1) )] ) ); % ( D^(l - 1) x D^(l) x M )
-% backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*delta_l1 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-%%
-% beta = mdl(l).beta;
-% lambda = mdl(l).lambda;
-% hbf1 = HBF1(c,t,beta,lambda);
-% x = Xminibatch';
-% y = Yminibatch';
-% z =  bsxfun(@plus, sum(t.^2)', sum(x.^2) ) - 2*(t'*x); % || x - t ||^2 = ||x||^2 + ||t||^2 - 2<x,t>
-% a = exp(-beta*z); %(K x 1)
-% dJ_dc_vec = 2*bsxfun(@times, (f-y)', a);
-% %% hbf1 numerical
-% dJ_dt_numerical = compute_dJ_dt_numerical_derivatives(x,y,c,t,beta,eps);
-% dJ_dc_numerical = compute_dJ_dc_numerical_derivatives(x,y,c,t,beta,eps);
 %% Calcualte numerical derivatives
-eps = 0.00001;
+eps = 0.0000001;
 numerical = numerical_derivative_dJ_dW_l( eps, mdl, Xminibatch, Yminibatch);
+%
+mdl_loops = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
+F_func_name = 'F_NO_activation_final_layer';
+mdl_loops(L-1).Act = @(S) exp(S);
+mdl_loops(L-1).dAct_ds = @(A) A;
+mdl_loops(L).Act = @(A) A;
+mdl_loops(L).dAct_ds = @(A) ones(1);
+%
+%mdl(1).F = @F;
+mdl_loops(1).F = @F_loops_NO_activation;
+mdl_loops(1).W = t;
+mdl_loops(2).W = c;
+numerical_loops = numerical_derivative_dJ_dW_l( eps, mdl_loops, Xminibatch, Yminibatch);
 %%
 dJ = struct('dW', cell(1,L) );
 for l=1:L
@@ -87,26 +84,8 @@ for l = 1:L
     fprintf('numerical(%d).dW',l);
     numerical(l).dW
     
-%     fprintf('hbf1_numerical(%d).dW',l);
-%     if l == 1
-%         dJ_dt_numerical
-%     else
-%         dJ_dc_numerical
-%     end
-    
-%     fprintf('hbf1_VEC_dJ(%d).dW',l);
-%     if l == 1
-%         dJ_dt_vec
-%     else
-%         dJ_dc_vec
-%     end
-%     
-%     fprintf('hbf1_LOOPS_dJ(%d).dW',l);
-%     if l == 1
-%         dJ_dt_loops
-%     else
-%         %dJ_dc_vec
-%     end
+    fprintf('numerical_loops(%d).dW',l)
+    numerical_loops(l).dW
     
     fprintf('backprop(%d).dW',l)
     backprop(l).dW
