@@ -66,4 +66,4 @@ backprop = struct('delta', cell(1,L));
 backprop(L).delta = (2 / batchsize)*( Yminibatch - fp(L).A ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
 backprop(L).delta2 = backprop(L).delta;
 %%
-[ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch);
+[ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch)

@@ -24,19 +24,20 @@ Identity = @(A) A;
 dIdentity_ds = @(A) ones(1);
 %% fake data
 N = 100;
-D = 5;
-K = 4;
-D_out = 3;
+M = 11;
+D = 10;
+K = 9;
+D_out = 8;
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
-L=2;
-batchsize = 1;
+L=4;
+batchsize = M;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer HBF net
 mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
-F_func_name = 'F_NO_activation_final_layer';
+%F_func_name = 'F_NO_activation_final_layer';
 F_func_name = 'F_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
@@ -57,10 +58,21 @@ switch F_func_name
         mdl(L).dAct_ds = dAct_ds;
 end      
 mdl(1).F = @F;
-t = rand(D,K);
-c = rand(K,D_out);
-mdl(1).W = t;
-mdl(2).W = c;
+D_max = D_out;
+D_l_1 = D;
+for l = 1:L
+    if l < L
+        D_l = randi(D_max,1);
+        mdl(l).W = rand(D_l_1,D_l);
+        mdl(l).b = rand(1,D_l);
+        D_l_1 = D_l;
+    else
+        D_l = D_out;
+        mdl(l).W = rand(D_l_1,D_l);
+        mdl(l).b = rand(1,D_l);
+        D_l_1 = D_l;
+    end
+end
 %% Forward pass
 [fp] = mdl(1).F(mdl, Xminibatch);
 %% Calculate derivatives using backprop code
@@ -85,9 +97,9 @@ l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
 backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 
-[ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch);
-T_ijm = bsxfun( @times, mdl(l).W, reshape(delta_l1',[1,flip( size(delta_l1) )] ) ); % ( D^(l - 1) x D^(l) x M )
-backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*delta_l1 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+%[ delta_l1, delta_l2, delta_l3, delta_l4 ] = delta_l( backprop, mdl, fp, 1, Xminibatch);
+%T_ijm = bsxfun( @times, mdl(l).W, reshape(delta_l1',[1,flip( size(delta_l1) )] ) ); % ( D^(l - 1) x D^(l) x M )
+%backprop(l).dW2 = 2 * mdl(l).beta * ( Xminibatch'*delta_l1 - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
 %% Calcualte numerical derivatives
 eps = 0.00001;
 numerical = numerical_derivative( eps, mdl, Xminibatch, Yminibatch);
@@ -97,19 +109,6 @@ for l=1:L
     dJ_dW_l = dJ_dW_debug( mdl, backprop, Xminibatch, fp, l, batchsize );
     dJ(l).dW = dJ_dW_l;
 end
-%%
-beta = mdl(l).beta;
-lambda = mdl(l).lambda;
-hbf1 = HBF1(c,t,beta,lambda);
-x = Xminibatch';
-y = Yminibatch';
-dJ_dt_numerical = compute_dJ_dt_numerical_derivatives(x,y,c,t,beta,eps);
-dJ_dc_numerical = compute_dJ_dc_numerical_derivatives(x,y,c,t,beta,eps );
-[ f, z, a ] = hbf1.f(x);
-%dJ_dt_vec = compute_dV_dt_vec( f,a, x,y, hbf1  );
-%dJ_dt_loops = compute_dJ_dt_loops(f,z, x,y, t,c);
-dJ_dc_vec = compute_dV_dc_vec( f,a, y );
-%dJ_dc_loops = compute_dJ_dc_loops( f,y,a );
 %% Compare with true gradient
 fprintf('---> Derivatives \n');
 for l = 1:L
@@ -117,32 +116,11 @@ for l = 1:L
     fprintf('numerical(%d).dW',l);
     numerical(l).dW
     
-    fprintf('hbf1_numerical(%d).dW',l);
-    if l == 1
-        dJ_dt_numerical
-    else
-        dJ_dc_numerical
-    end
-    
-%     fprintf('hbf1_VEC_dJ(%d).dW',l);
-%     if l == 1
-%         dJ_dt_vec
-%     else
-%         dJ_dc_vec
-%     end
-%     
-%     fprintf('hbf1_LOOPS_dJ(%d).dW',l);
-%     if l == 1
-%         dJ_dt_loops
-%     else
-%         %dJ_dc_vec
-%     end
-    
     fprintf('backprop(%d).dW',l)
     backprop(l).dW
     fprintf('backprop(%d).dW2',l)
-    backprop(l).dW2
-    fprintf('dJ(%d).dW',l)
+    %backprop(l).dW2
+    %fprintf('dJ(%d).dW',l)
     dJ(l).dW
 end
 beep;
