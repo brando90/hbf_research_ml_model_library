@@ -60,7 +60,10 @@ eps = 0.0000001;
 numerical = numerical_derivative_dJ_dW_l( eps, mdl, Xminibatch, Yminibatch);
 %
 mdl_loops = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
-F_func_name = 'F_NO_activation_final_layer';
+for l = 1:L
+    mdl_loops(l).beta = 0.5;
+    mdl_loops(l).lambda = 0;
+end
 mdl_loops(L-1).Act = @(S) exp(S);
 mdl_loops(L-1).dAct_ds = @(A) A;
 mdl_loops(L).Act = @(A) A;
@@ -77,6 +80,8 @@ for l=1:L
     dJ_dW_l = dJ_dW_debug( mdl, backprop, Xminibatch, fp, l, batchsize );
     dJ(l).dW = dJ_dW_l;
 end
+%%
+[ backprop_loops ] = dJ_dW_loops( backprop, mdl, fp, Xminibatch );
 %% Compare with true gradient
 fprintf('---> Derivatives \n');
 for l = 1:L
@@ -90,8 +95,8 @@ for l = 1:L
     fprintf('backprop(%d).dW',l)
     backprop(l).dW
     
-%     fprintf('backprop(%d).dW2',l)
-%     backprop(l).dW2
+    fprintf('backprop(%d).dW2',l)
+    backprop_loops(l).dW
     
     fprintf('dJ(%d).dW',l)
     dJ(l).dW
