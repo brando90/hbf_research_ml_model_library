@@ -6,8 +6,8 @@ L = size(mdl,2);
 if sgd_errors
     errors_train = zeros(iterations+1,1);
     errors_test = zeros(iterations+1,1);
-    errors_train(1) = compute_Hf_sq_error(X_train,Y_train, mdl, mdl.lambda);
-    errors_test(1) = compute_Hf_sq_error(X_test,Y_test, mdl, mdl.lambda);
+    errors_train(1) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
+    errors_test(1) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
 end
 if step_size_params.AdaGrad
     G_c = ones(K, D_out);
@@ -60,6 +60,10 @@ for i=2:length(errors_test)
     for j = 1:nb_layers
         mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
         mdl(j).W = mdl(j).b - step_size * backprop(j).db;
+    end
+    if sgd_errors
+        errors_train(i) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
+        errors_test(i) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
     end
 end
 end
