@@ -43,8 +43,8 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer net
 %mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 mdl = struct('W', cell(1,L),'b', cell(1,L),'F', cell(1,L), 'Act',cell(1,L),'dAct_ds',cell(1,L),'lambda', cell(1,L));
-%F_func_name = 'F_NO_activation_final_layer';
-F_func_name = 'F_activation_final_layer';
+F_func_name = 'F_NO_activation_final_layer';
+%F_func_name = 'F_activation_final_layer';
 mdl(1).F = @F;
 Act = sigmoid_func;
 dAct_ds = dSigmoid_ds;

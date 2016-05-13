@@ -32,7 +32,7 @@ for i=2:length(errors_test)
     % activation for final layer (not special for regression but special for classification as we need to output probability of each class
     A = mdl(L).Act( bsxfun(@plus, A * mdl(L).W, mdl(L).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
     fp(L).A = A; % (M x D^(l))
-    %% Back propagation
+    %% Back propagation dJ_dW
     backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     step_down_1=-1;
     for l = L:step_down_1:2

@@ -1,4 +1,4 @@
-function mdl, errors_train, errors_test = multilayer_learn_HBF_MiniBatchSGD( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
+function [mdl, errors_train, errors_test] = multilayer_learn_HBF_MiniBatchSGD( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
 fprintf('sgd_errors = %d',sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
@@ -26,7 +26,6 @@ for i=2:length(errors_test)
     %% Forward pass starting from the input
     L = size(mdl,2);
     A = Xminibatch; % ( M x D) = (M x D^(0))
-    fp = struct('A', cell(1,L));
     for l = 1:L-1
         WW = sum(mdl(l).W.^2, 1); % ( 1 x D^(l-1)= sum( (M x D^(l)), 1 )
         XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
@@ -48,7 +47,6 @@ for i=2:length(errors_test)
         fp(L).A = A; % (M x D^(l))
     end
     %% Back propagation dJ_dW
-    backprop = struct('delta', cell(1,L));
     backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     for l = L:-1:2
         if l == L && mdl(L).Act( ones(1) ) == ones(1)
