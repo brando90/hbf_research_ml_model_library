@@ -25,9 +25,9 @@ dIdentity_ds = @(A) ones(size(A));
 %% dimension
 N = 100;
 M = 10;
-D_0 = 5; % D^(L-2)
-D_1 = 4; % D^(L-1)
-D_2 = 3; % D^(L)
+D_0 = 7; % D^(L-2)
+D_1 = 6; % D^(L-1)
+D_2 = 5; % D^(L)
 % 1 letter names
 D = D_0;
 K = D_1;
@@ -35,25 +35,25 @@ D_out = D_2;
 %% fake data
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
-L=2;
+L=4;
 batchsize = M;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
-%% Define multilayer HBF net
+%% Define multilayer net
 %mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 mdl = struct('W', cell(1,L),'b', cell(1,L),'F', cell(1,L), 'Act',cell(1,L),'dAct_ds',cell(1,L),'lambda', cell(1,L));
 %F_func_name = 'F_NO_activation_final_layer';
 F_func_name = 'F_activation_final_layer';
 mdl(1).F = @F;
-%Act = sigmoid_func;
-%dAct_ds = dSigmoid_ds;
+Act = sigmoid_func;
+dAct_ds = dSigmoid_ds;
 % Act = relu_func;
 % dAct_ds = dRelu_ds;
 % Act = gauss_func;
 % dAct_ds = dGauss_ds;
-Act = tanh_func;
-dAct_ds = dTanh_ds;
+%Act = tanh_func;
+%dAct_ds = dTanh_ds;
 for l = 1:L
     mdl(l).lambda = 0;
 end
@@ -135,14 +135,16 @@ numerical_883 = numerical_derivative_offset( numerical_883, eps, mdl_883, Xminib
 %% Compare with true gradient
 for l = 1:L
     fprintf('------------ L = %d ------------ \n', l)
-    fprintf('numerical(%d).dW',l);
+    fprintf('-- numerical(%d).dW',l);
     numerical(l).dW
-    fprintf('numerical_883(%d).dW',l);
+    fprintf('-- numerical_883(%d).dW',l);
     numerical_883(l).dW   
-    fprintf('backprop(%d).dW',l)
+    fprintf('-- backprop(%d).dW',l)
     backprop(l).dW
-    fprintf('backprop_883(%d).dW',l)
+    fprintf('-- backprop_883(%d).dW',l)
     backprop_883(l).dW
+    
+    fprintf('--** \n')
     
     fprintf('numerical(%d).db',l);
     numerical(l).db
