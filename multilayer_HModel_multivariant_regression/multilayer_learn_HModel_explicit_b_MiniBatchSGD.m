@@ -25,14 +25,15 @@ for i=2:length(errors_test)
     %% Forward pass starting from the input
     A = Xminibatch; % ( M x D+1) = (M x D^(0))
     for l = 1:L-1
-        A = mdl(1).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+        A = mdl(l).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+        %A = max(0, A * mdl(l).W + repmat(mdl(l).b, batchsize, 1));
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer (not special for regression but special for classification as we need to output probability of each class
     A = mdl(L).Act( bsxfun(@plus, A * mdl(L).W, mdl(L).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
     fp(L).A = A; % (M x D^(l))
     %% Back propagation
-    backprop(L).delta = (2 / batchsize)*(Yminibatch - fp(L).A) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
+    backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     step_down_1=-1;
     for l = L:step_down_1:2
         backprop(l).dW = fp(l-1).A' * backprop(l).delta + mdl(l).lambda * mdl(l).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
