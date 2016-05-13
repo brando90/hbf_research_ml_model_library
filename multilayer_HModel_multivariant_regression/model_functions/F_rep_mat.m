@@ -1,4 +1,4 @@
-function [ fp ] = F( mdl, Xminibatch )
+function [ fp ] = F_rep_mat( mdl, Xminibatch )
 %% Forward Pass (fp) HModel/NN
 L = size(mdl,2);
 batchsize = size(Xminibatch,1);
@@ -6,12 +6,13 @@ fp = struct('A', cell(1,L));
 if isfield(mdl, 'b')
     A = Xminibatch; % ( M x D+1) = (M x D^(0))
     for l = 1:L-1
-        A = mdl(l).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
-        %A = max(0, A * mdl(l).W + repmat(mdl(l).b, batchsize, 1));
+        %A = mdl(l).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+        A = max(0, A * mdl(l).W + repmat(mdl(l).b, batchsize, 1));
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer (not special for regression but special for classification as we need to output probability of each class
-    A = mdl(L).Act( bsxfun(@plus, A * mdl(L).W, mdl(L).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+    %A = mdl(L).Act( bsxfun(@plus, A * mdl(L).W, mdl(L).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
+    A = max(0, A * mdl(L).W + repmat(mdl(L).b, batchsize, 1));
     fp(L).A = A; % (M x D^(l))
 else
     A = Xminibatch; % ( M x D+1) = (M x D^(0))

@@ -35,7 +35,7 @@ D_out = D_2;
 %% fake data
 X_train = rand(N, D);
 Y_train = rand(N, D_out);
-L=4;
+L=2;
 batchsize = M;
 mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
@@ -45,14 +45,15 @@ Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 mdl = struct('W', cell(1,L),'b', cell(1,L),'F', cell(1,L), 'Act',cell(1,L),'dAct_ds',cell(1,L),'lambda', cell(1,L));
 %F_func_name = 'F_NO_activation_final_layer';
 F_func_name = 'F_activation_final_layer';
-Act = sigmoid_func;
-dAct_ds = dSigmoid_ds;
+mdl(1).F = @F;
+%Act = sigmoid_func;
+%dAct_ds = dSigmoid_ds;
 % Act = relu_func;
 % dAct_ds = dRelu_ds;
 % Act = gauss_func;
 % dAct_ds = dGauss_ds;
-% Act = tanh_func;
-% dAct_ds = dTanh_ds;
+Act = tanh_func;
+dAct_ds = dTanh_ds;
 for l = 1:L
     mdl(l).lambda = 0;
 end
@@ -83,19 +84,23 @@ for l = 1:L
         D_l_1 = D_l;
     end
 end
-% t = rand(D,K);
-% c = rand(K,D_out);
-% mdl(1).W = t;
-% mdl(1).b = rand(1,K);
-% mdl(2).W = c;
-% mdl(2).b = rand(1,D_out);
-mdl(1).F = @F;
+%%
+mdl_883 = struct('W', cell(1,L),'b', cell(1,L),'F', cell(1,L), 'Act',cell(1,L),'dAct_ds',cell(1,L),'lambda', cell(1,L));
+mdl_883(1).F = @F_rep_mat;
+mdl_883(1).F = @F;
+for l=1:L
+    mdl_883(l).W = mdl(l).W;
+    mdl_883(l).b = mdl(l).b;
+    mdl_883(l).Act = mdl(l).Act;
+    mdl_883(l).dAct_ds = mdl(l).dAct_ds;
+    mdl_883(l).lambda = 0;
+end
 %% Forward pass
 [fp] = mdl(1).F(mdl, Xminibatch);
+[fp_883] = mdl_883(1).F(mdl_883, Xminibatch);
 %% Calculate derivatives using backprop code
 % compute dJ_dw
 backprop = struct('delta', cell(1,L));
-
 backprop(L).delta = (2 / batchsize)*(fp(L).A - Yminibatch) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
 step_down_1=-1;
 for l = L:step_down_1:2
@@ -106,21 +111,46 @@ for l = L:step_down_1:2
 end
 backprop(1).dW = Xminibatch' * backprop(1).delta + mdl(1).lambda * mdl(1).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
 backprop(1).db = sum(backprop(1).delta, 1);
+%%
+backprop_883 = struct('delta', cell(1,L));
+backprop_883(L).delta = (2 / batchsize)*(fp_883(L).A - Yminibatch) .* mdl_883(L).dAct_ds( fp_883(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
+step_down_1=-1;
+for l = L:step_down_1:2
+    backprop_883(l).dW = fp_883(l-1).A' * backprop_883(l).delta + mdl_883(l).lambda * mdl_883(l).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
+    backprop_883(l).db = sum(backprop_883(l).delta, 1); % (1 x D^(l)) = sum(M x D^(l), 1)
+    % compute delta for next iteration of backprop (i.e. previous layer)
+    backprop_883(l-1).delta = mdl_883(l-1).dAct_ds(fp_883(l-1).A) .* (backprop_883(l).delta * mdl_883(l).W'); % (M x D^(l-1)) = (M x D^(l)) .* (M x D^(l)) x ()
+end
+backprop_883(1).dW = Xminibatch' * backprop_883(1).delta + mdl_883(1).lambda * mdl_883(1).W; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
+backprop_883(1).db = sum(backprop_883(1).delta, 1);
 %% Calcualte numerical derivatives
-eps = 0.0000000001;
+eps = 0.00000001;
 numerical = struct('dW', cell(1,L),'db', cell(1,L));
 numerical = numerical_derivative( numerical, eps, mdl, Xminibatch, Yminibatch);
 numerical = numerical_derivative_offset( numerical, eps, mdl, Xminibatch, Yminibatch);
+
+numerical_883 = struct('dW', cell(1,L),'db', cell(1,L));
+numerical_883 = numerical_derivative( numerical_883, eps, mdl_883, Xminibatch, Yminibatch);
+numerical_883 = numerical_derivative_offset( numerical_883, eps, mdl_883, Xminibatch, Yminibatch);
 %% Compare with true gradient
-for j = 1:L
-    fprintf('------------ L = %d ------------ \n', j)
-    fprintf('numerical(%d).dW',j);
-    numerical(j).dW
-    fprintf('backprop(%d).dW',j)
-    backprop(j).dW
-    fprintf('numerical(%d).db',j);
-    numerical(j).db
-    fprintf('backprop(%d).db',j)
-    backprop(j).db
+for l = 1:L
+    fprintf('------------ L = %d ------------ \n', l)
+    fprintf('numerical(%d).dW',l);
+    numerical(l).dW
+    fprintf('numerical_883(%d).dW',l);
+    numerical_883(l).dW   
+    fprintf('backprop(%d).dW',l)
+    backprop(l).dW
+    fprintf('backprop_883(%d).dW',l)
+    backprop_883(l).dW
+    
+    fprintf('numerical(%d).db',l);
+    numerical(l).db
+    fprintf('numerical_883(%d).db',l);
+    numerical_883(l).db
+    fprintf('backprop(%d).db',l)
+    backprop(l).db
+    fprintf('backprop_883(%d).db',l)
+    backprop_883(l).db
 end
 beep;

@@ -46,7 +46,8 @@ end
 backprop = struct('delta', cell(1,L));
 backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
 for l = L:-1:2
-    if l == L && mdl(L).Act( ones(1) ) == ones(1) 
+    if l == L && mdl(L).Act( ones(1) ) == ones(1)
+        % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
         backprop(l).dW = fp(l-1).A' * backprop(l).delta; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
         % compute delta for next iteration of backprop (i.e. previous layer)
         backprop(l-1).delta = mdl(l-1).dAct_ds(fp(l-1).A) .* (backprop(l).delta * mdl(l).W');
@@ -63,10 +64,9 @@ end
 l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
 backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-
 %% Calcualte numerical derivatives
 eps = 0.0000001;
-numerical = numerical_derivative_dJ_dW_l( eps, mdl, Xminibatch, Yminibatch);
+numerical = numerical_derivative_dJ_dW( eps, mdl, Xminibatch, Yminibatch);
 %
 mdl_loops = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
 for l = 1:L

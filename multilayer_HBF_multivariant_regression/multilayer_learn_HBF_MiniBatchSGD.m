@@ -16,7 +16,7 @@ elseif step_size_params.Decaying
     step_size = step_size_params.step_size; %TODO
 end
 fp = struct('A', cell(1,L));
-backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'db', cell(1,L) );
+backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'db');
 for i=2:length(errors_test)
     %% get minibatch
     mini_batch_indices = ceil(rand(batchsize,1) * N); % M
@@ -24,38 +24,51 @@ for i=2:length(errors_test)
     Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
     A = Xminibatch; % ( M x D) = (M x D^(0))
     %% Forward pass starting from the input
+    L = size(mdl,2);
+    A = Xminibatch; % ( M x D) = (M x D^(0))
+    fp = struct('A', cell(1,L));
     for l = 1:L-1
-        WW = sum(mdl(l).W .* mdl(l).W, 1); % ( 1 x D^(l) )
-        XX = sum(A .* A, 2); % (M x 1)
-        moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
-        Z = 2 * mdl.beta * ( A*mdl(l).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
-        A = mdl.Act(Z); % (M x D^(l))
+        WW = sum(mdl(l).W.^2, 1); % ( 1 x D^(l-1)= sum( (M x D^(l)), 1 )
+        XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
+        Z = mdl(l).beta*( 2*(A*mdl(l).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
+        fp(l).Z = Z;
+        A = mdl(l).Act(Z); % (M x D^(l))
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer
-    if mdl(L).Act( ones(1) ) == ones(1) %% if Act func is Identity 
-        A = mdl(L).Act( A * neural_net(L).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
+    if mdl(L).Act( ones(1) ) == ones(1) %% if Act func is Identity i.e. NO ACTIVATION for final Layer
+        A = mdl(L).Act( A * mdl(L).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
         fp(L).A = A; % (M x D^(l))
     else
-        WW = sum(mdl(L).W .* mdl(L).W, 1); % ( 1 x D^(l) )
-        XX = sum(A .* A, 2); % (M x 1)
-        moving_offset = bsxfun(@plus, XX, WW); % ( M x D^(l) ) = (M x 1) .+ (1 x D^(l))
-        Z = 2 * mdl.beta ( A*mdl(L).W - moving_offset); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
-        fp(L).A = mdl(L).Act(Z); % (M x D^(l))
+        WW = sum(mdl(L).W.^2, 1); % ( 1 x D^(l-1)= sum( (M x D^(l)), 1 )
+        XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
+        Z = mdl(L).beta*( 2*(A*mdl(L).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
+        fp(L).Z = Z;
+        A = mdl(L).Act(Z); % (M x D^(l))
+        fp(L).A = A; % (M x D^(l))
     end
-    %% Back propagation
+    %% Back propagation dJ_dW
+    backprop = struct('delta', cell(1,L));
     backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
-    step_down_1=-1;
-    for l = L:step_down_1:2
-        % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
-        T_ijm = bsxfun( @times, W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
-        backprop(l).dW = 2 * mdl.beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-        
-        % compute delta for next iteration of backprop (i.e. previous layer) and threshold at 0 if O is <0 (ReLU gradient update)
-        delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x L), 2 ) 
-        A_delta = bsxfun(@times, fp(l).A, delta_sum); % (M x L) = (M x L) .* (M x 1)
-        backprop(l-1).delta = 2*mdl.beta * hbf_netdAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_delta ); % (M x D^(l-1)) = (M x D^(l) x ()
+    for l = L:-1:2
+        if l == L && mdl(L).Act( ones(1) ) == ones(1)
+            % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
+            backprop(l).dW = fp(l-1).A' * backprop(l).delta; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
+            % compute delta for next iteration of backprop (i.e. previous layer)
+            backprop(l-1).delta = mdl(l-1).dAct_ds(fp(l-1).A) .* (backprop(l).delta * mdl(l).W');
+        else
+            % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
+            T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
+            backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
+            % compute delta for next iteration of backprop (i.e. previous layer)
+            delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
+            A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
+            backprop(l-1).delta = 2*mdl(l).beta * mdl(l-1).dAct_ds( fp(l-1).A ).*( backprop(l).delta*mdl(l).W' - A_x_delta ); % (M x D^(l-1))
+        end
     end
+    l=1;
+    T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
+    backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
     %% step size
     mod_when = 2000;
     if step_size_params.AdaGrad
