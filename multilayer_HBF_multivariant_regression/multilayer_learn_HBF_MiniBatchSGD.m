@@ -1,13 +1,13 @@
-function [mdl, errors_train, errors_test] = multilayer_learn_HBF_MiniBatchSGD( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
-fprintf('sgd_errors = %d',sgd_errors);
+function [mdl, errors_train, errors_test] = multilayer_learn_HBF_MiniBatchSGD( X_train,Y_train, mdl, nb_iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
+fprintf('sgd_errors = %d', sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
 L = size(mdl,2);
 if sgd_errors
-    errors_train = zeros(iterations+1,1);
-    errors_test = zeros(iterations+1,1);
-    errors_train(1) = compute_Hf_sq_error(X_train,Y_train, mdl, mdl.lambda);
-    errors_test(1) = compute_Hf_sq_error(X_test,Y_test, mdl, mdl.lambda);
+    errors_train = zeros(nb_iterations+1,1);
+    errors_test = zeros(nb_iterations+1,1);
+    errors_train(1) = compute_Hf_sq_error(X_train,Y_train, mdl);
+    errors_test(1) = compute_Hf_sq_error(X_test,Y_test, mdl);
 end
 if step_size_params.AdaGrad
     G_c = ones(K, D_out);
@@ -16,13 +16,15 @@ elseif step_size_params.Decaying
     step_size = step_size_params.step_size; %TODO
 end
 fp = struct('A', cell(1,L));
-backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'db');
+backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'db', cell(1,L));
+
+fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size =%f \n', 0, errors_train(1), errors_test(1), step_size)
+
 for i=2:length(errors_test)
     %% get minibatch
     mini_batch_indices = ceil(rand(batchsize,1) * N); % M
     Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
     Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
-    A = Xminibatch; % ( M x D) = (M x D^(0))
     %% Forward pass starting from the input
     L = size(mdl,2);
     A = Xminibatch; % ( M x D) = (M x D^(0))
@@ -46,6 +48,7 @@ for i=2:length(errors_test)
         A = mdl(L).Act(Z); % (M x D^(l))
         fp(L).A = A; % (M x D^(l))
     end
+        
     %% Back propagation dJ_dW
     backprop(L).delta = (2 / batchsize)*( fp(L).A - Yminibatch ) .* mdl(L).dAct_ds( fp(L).A ); % ( M x D^(L) ) = (M x D^(L)) .* (M x D^(L))
     for l = L:-1:2
@@ -79,6 +82,7 @@ for i=2:length(errors_test)
             step_size = step_size/1.2;
         end
     end
+    
     %% gradient step for all layers
     for j = 1:L
         mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
@@ -87,6 +91,10 @@ for i=2:length(errors_test)
     if sgd_errors
         errors_train(i) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
         errors_test(i) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
+        if mod(i, ceil(nb_iterations/100)) == 0
+            % Display the results achieved so far
+            fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size =%f \n', i, errors_train(i), errors_test(i), step_size)
+        end
     end
 end
 end
