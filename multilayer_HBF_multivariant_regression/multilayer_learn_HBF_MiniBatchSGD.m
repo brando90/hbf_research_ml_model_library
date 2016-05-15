@@ -12,7 +12,7 @@ end
 if step_size_params.AdaGrad
     G_c = ones(K, D_out);
     G_t = ones(D, K);
-elseif step_size_params.Decaying
+elseif step_size_params.Constant
     step_size = step_size_params.step_size; %TODO
 end
 fp = struct('A', cell(1,L));
@@ -79,7 +79,7 @@ for i=2:length(errors_test)
         mu_t = step_size_params.eta_t ./ ( (G_t).^0.5 );
     elseif step_size_params.Decaying
         if mod(i, mod_when) == 0
-            step_size = step_size/1.2;
+            step_size = step_size/step_size_params.decay_rate;
         end
     end
     
