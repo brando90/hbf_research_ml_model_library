@@ -53,13 +53,14 @@ for i=2:length(errors_test)
         mu_t = step_size_params.eta_t ./ ( (G_t).^0.5 );
     elseif step_size_params.Decaying
         if mod(i, mod_when) == 0
-            step_size = step_size/1.2;
+            step_size = step_size/step_size_params.decay_rate;
         end
     end
+    
     %% gradient step for all layers
-    for j = 1:nb_layers
+    for j = 1:L
         mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
-        mdl(j).W = mdl(j).b - step_size * backprop(j).db;
+        mdl(j).b = mdl(j).b - step_size * backprop(j).db;
     end
     if sgd_errors
         errors_train(i) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);

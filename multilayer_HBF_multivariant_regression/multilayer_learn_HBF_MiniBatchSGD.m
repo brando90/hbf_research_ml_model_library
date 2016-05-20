@@ -12,7 +12,7 @@ end
 if step_size_params.AdaGrad
     G_c = ones(K, D_out);
     G_t = ones(D, K);
-elseif step_size_params.Constant
+elseif step_size_params.Decaying
     step_size = step_size_params.step_size; %TODO
 end
 fp = struct('A', cell(1,L));
