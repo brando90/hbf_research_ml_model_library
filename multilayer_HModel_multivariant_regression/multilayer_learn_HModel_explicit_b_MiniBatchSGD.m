@@ -1,11 +1,11 @@
-function [ mdl, errors_train, errors_test ] = multilayer_learn_HModel_explicit_b_MiniBatchSGD( X_train,Y_train, mdl, iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
+function [ mdl, errors_train, errors_test ] = multilayer_learn_HModel_explicit_b_MiniBatchSGD( X_train,Y_train, mdl, nb_iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
 fprintf('sgd_errors = %d',sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
 L = size(mdl,2);
 if sgd_errors
-    errors_train = zeros(iterations+1,1);
-    errors_test = zeros(iterations+1,1);
+    errors_train = zeros(nb_iterations+1,1);
+    errors_test = zeros(nb_iterations+1,1);
     errors_train(1) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
     errors_test(1) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
 end
@@ -62,9 +62,15 @@ for i=2:length(errors_test)
         mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
         mdl(j).b = mdl(j).b - step_size * backprop(j).db;
     end
+    %% print errors
     if sgd_errors
         errors_train(i) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
         errors_test(i) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
+        %if mod(i, ceil(nb_iterations/100)) == 0 && step_size_params.print_error_to_screen
+        if mod(i, ceil(nb_iterations/10)) == 0 && step_size_params.print_error_to_screen
+            % Display the results achieved so far
+            fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size = %f \n', i, errors_train(i), errors_test(i), step_size)
+        end
     end
 end
 end
