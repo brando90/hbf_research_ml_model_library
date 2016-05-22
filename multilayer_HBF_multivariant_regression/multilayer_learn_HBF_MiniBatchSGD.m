@@ -71,7 +71,7 @@ for i=2:length(errors_test)
     T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
     backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
     %% step size
-    mod_when = 2000;
+    mod_when = step_size_params.mod_when;
     if step_size_params.AdaGrad
         G_c = G_c + dJ_dc.^2;
         mu_c = step_size_params.eta_c ./ ( (G_c).^0.5 );
