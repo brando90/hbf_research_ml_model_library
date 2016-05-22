@@ -45,7 +45,7 @@ for i=2:length(errors_test)
     backprop(1).db = sum(backprop(1).delta, 1);
     %% step-size
     % TODO how to process step-size for offset
-    mod_when = 2000;
+    mod_when = step_size_params.mod_when;
     if step_size_params.AdaGrad
         G_c = G_c + dJ_dc.^2;
         mu_c = step_size_params.eta_c ./ ( (G_c).^0.5 );
