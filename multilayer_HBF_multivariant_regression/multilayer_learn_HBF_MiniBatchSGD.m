@@ -92,7 +92,8 @@ for i=2:length(errors_test)
         errors_train(i) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
         errors_test(i) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
         %if mod(i, ceil(nb_iterations/100)) == 0 && step_size_params.print_error_to_screen
-        if mod(i, ceil(nb_iterations/10)) == 0 && step_size_params.print_error_to_screen
+        print_every_multiple = step_size_params.print_every_multiple;
+        if mod(i, print_every_multiple) == 0 && step_size_params.print_error_to_screen
             % Display the results achieved so far
             fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size = %f \n', i, errors_train(i), errors_test(i), step_size)
         end
