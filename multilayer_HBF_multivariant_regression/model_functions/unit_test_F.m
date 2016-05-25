@@ -1,6 +1,6 @@
 restoredefaultpath;clear;clc;clear;clc;
 %%
-N = 1;
+N = 3;
 D = 2;
 D_out = 3;
 X = rand(N,D);
