@@ -9,8 +9,9 @@ for l = 1:L-1
     Delta_tilde = 2*(A*mdl(l).W) - bsxfun(@plus, WW, XX) ;
     %Z = mdl(l).beta*( 2*(A*mdl(l).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
     Z = mdl(l).beta*( Delta_tilde ); % (M x D^(l-1)) - (M x D^(l-1))
-    fp(l).Z = Z;
     A = mdl(l).Act(Z); % (M x D^(l))
+    fp(l).Delta_tilde = Delta_tilde;
+    fp(l).Z = Z;
     fp(l).A = A; % (M x D^(l))
 end
 % activation for final layer
@@ -23,8 +24,9 @@ else
     Delta_tilde = 2*(A*mdl(L).W) - bsxfun(@plus, WW, XX) ;
     %Z = mdl(l).beta*( 2*(A*mdl(l).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
     Z = mdl(l).beta*( Delta_tilde ); % (M x D^(l-1)) - (M x D^(l-1))
-    fp(L).Z = Z;
     A = mdl(L).Act(Z); % (M x D^(l))
+    fp(L).Delta_tilde = Delta_tilde;
+    fp(L).Z = Z;
     fp(L).A = A; % (M x D^(l))
 end
 end
