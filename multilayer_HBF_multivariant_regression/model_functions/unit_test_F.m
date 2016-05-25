@@ -1,6 +1,6 @@
 restoredefaultpath;clear;clc;clear;clc;
 %%
-N = 3;
+N = 1;
 D = 2;
 D_out = 3;
 X = rand(N,D);
@@ -51,9 +51,9 @@ mdl = make_HBF_model( L, hbf2_param);
 %% tests
 Xminibatch = X;
 [ fp1 ] = F( mdl, Xminibatch )
-%[ fp2 ] = F_activation_final( mdl, Xminibatch )
+[ fp2 ] = F_loops_NO_activation_lots_layers( mdl, Xminibatch )
 %[ fp3 ] = F_loops_NO_activation( mdl, Xminibatch )
 %%
 fp1(L).A
-% fp2(L).A
+fp2(L).A
 % fp3(L).A
