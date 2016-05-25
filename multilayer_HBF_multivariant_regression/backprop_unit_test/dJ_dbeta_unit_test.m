@@ -37,8 +37,8 @@ Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer HBF net
 mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
-F_func_name = 'F_NO_activation_final_layer';
-%F_func_name = 'F_activation_final_layer';
+%F_func_name = 'F_NO_activation_final_layer';
+F_func_name = 'F_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
 for l = 1:L
@@ -90,7 +90,7 @@ for l = L:-1:2
         T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
         backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
         delta_total = backprop(l).delta .* fp(l).Delta_tilde;
-        backprop(l).dBeta = sum(delta_total(:));
+        backprop(l).dBeta = sum( sum(delta_total) );
         % compute delta for next iteration of backprop (i.e. previous layer)
         delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
         A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
@@ -103,7 +103,7 @@ backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm,
 delta_total = backprop(l).delta .* fp(l).Delta_tilde;
 backprop(l).dBeta = sum(delta_total(:));
 %% Calcualte numerical derivatives
-eps = 0.000001;
+eps = 0.0001;
 %numerical = numerical_derivative_dJ_dW( eps, mdl, Xminibatch, Yminibatch);
 numerical = numerical_derivative_dJ_dBeta( eps, mdl, Xminibatch, Yminibatch);
 %%

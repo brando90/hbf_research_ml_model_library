@@ -23,7 +23,7 @@ else
     XX = sum(A.^2, 2); % (M x 1) = sum( (M x D^(l-1)), 2 )
     Delta_tilde = 2*(A*mdl(L).W) - bsxfun(@plus, WW, XX) ;
     %Z = mdl(l).beta*( 2*(A*mdl(l).W) - bsxfun(@plus, WW, XX)); % (M x D^(l-1)) - (M x D^(l-1))
-    Z = mdl(l).beta*( Delta_tilde ); % (M x D^(l-1)) - (M x D^(l-1))
+    Z = mdl(L).beta*( Delta_tilde ); % (M x D^(l-1)) - (M x D^(l-1))
     A = mdl(L).Act(Z); % (M x D^(l))
     fp(L).Delta_tilde = Delta_tilde;
     fp(L).Z = Z;
