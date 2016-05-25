@@ -95,6 +95,7 @@ for i=2:length(errors_test)
     for j = 1:L
         mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
         mdl(j).beta = mdl(j).beta - step_size * backprop(j).dBeta;
+        mdl(j).beta
     end
     %% print errors
     if sgd_errors
