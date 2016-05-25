@@ -24,7 +24,7 @@ Identity = @(A) A;
 dIdentity_ds = @(A) ones(1);
 %% fake data
 N = 100;
-M = 11;
+M = 3;
 D = 10;
 K = 9;
 D_out = 8;
@@ -103,7 +103,7 @@ backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm,
 delta_total = backprop(l).delta .* fp(l).Delta_tilde;
 backprop(l).dBeta = sum(delta_total(:));
 %% Calcualte numerical derivatives
-eps = 0.0000001;
+eps = 0.000001;
 %numerical = numerical_derivative_dJ_dW( eps, mdl, Xminibatch, Yminibatch);
 numerical = numerical_derivative_dJ_dBeta( eps, mdl, Xminibatch, Yminibatch);
 %%
@@ -127,7 +127,9 @@ for l = 1:L
     %fprintf('dJ(%d).dW',l)
     %dJ(l).dW
 
+    fprintf('backprop(%d).dbeta',l)
+    backprop(l).dBeta
     fprintf('numerical(%d).dbeta',l);
-    numerical(l).dbeta
+    numerical(l).dBeta
 end
 beep;
