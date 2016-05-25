@@ -40,20 +40,27 @@ for l=1:L-1
     hbf2_param(l).Act = Act;
     hbf2_param(l).dAct_ds = dAct_ds;
 end
-hbf2_param(1).F = 'F_NO_activation_final_layer';
+hbf2_param(1).F = 'F_NO_activation_final_layer'; %<-- UNCOMMENT
+%hbf2_param(1).F = 'F_activation_final_layer'; %<-- UNCOMMENT
 %regularization
 for l=1:L
     hbf2_param(l).lambda = 0;
 end
 %make NN mdl
 mdl = make_HBF_model( L, hbf2_param);
-
 %% tests
-Xminibatch = X;
-[ fp1 ] = F( mdl, Xminibatch )
-[ fp2 ] = F_loops_NO_activation_lots_layers( mdl, Xminibatch )
-%[ fp3 ] = F_loops_NO_activation( mdl, Xminibatch )
-%%
-fp1(L).A
-fp2(L).A
-% fp3(L).A
+if strcmp(hbf2_param(1).F, 'F_NO_activation_final_layer')
+    Xminibatch = X;
+    [ fp1 ] = F( mdl, Xminibatch );
+    [ fp2 ] = F_loops_NO_activation_lots_layers( mdl, Xminibatch );
+    %%
+    fp1(L).A
+    fp2(L).A
+else
+    Xminibatch = X;
+    [ fp1 ] = F( mdl, Xminibatch );
+    [ fp2 ] = F_activation_lots_layers( mdl, Xminibatch );
+    %%
+    fp1(L).A
+    fp2(L).A
+end
