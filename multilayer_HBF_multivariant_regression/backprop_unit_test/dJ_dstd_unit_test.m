@@ -37,8 +37,8 @@ Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %% Define multilayer HBF net
 mdl = struct('F',cell(1,L),'Act',cell(1,L),'dAct_ds',cell(1,L),'W',cell(1,L),'beta',cell(1,L));
-F_func_name = 'F_NO_activation_final_layer';
-%F_func_name = 'F_activation_final_layer';
+%F_func_name = 'F_NO_activation_final_layer';
+F_func_name = 'F_activation_final_layer';
 Act = gauss_func;
 dAct_ds = dGauss_ds;
 for l = 1:L

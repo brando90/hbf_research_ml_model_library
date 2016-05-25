@@ -16,7 +16,7 @@ elseif step_size_params.Decaying
     step_size = step_size_params.step_size; %TODO
 end
 fp = struct('A', cell(1,L), 'Z', cell(1,L), 'Delta_tilde', cell(1,L));
-backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'db', cell(1,L));
+backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'dStd', cell(1,L));
 
 fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size =%f \n', 0, errors_train(1), errors_test(1), step_size)
 
@@ -61,13 +61,14 @@ for i=2:length(errors_test)
         if l == L && mdl(L).Act( ones(1) ) == ones(1)
             % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
             backprop(l).dW = fp(l-1).A' * backprop(l).delta; % (D^(l-1) x D^(l)) = (M x D ^(l-1))' x (M x D^(l))
+            backprop(l).dStd = 0; % there is no gaussian in final layer
             % compute delta for next iteration of backprop (i.e. previous layer)
             backprop(l-1).delta = mdl(l-1).dAct_ds(fp(l-1).A) .* (backprop(l).delta * mdl(l).W');
         else
             % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
             T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
             backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-            backprop(l).dBeta = sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
+            backprop(l).dStd = -8^0.5 * mdl(l).beta^1.5 * sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
             % compute delta for next iteration of backprop (i.e. previous layer)
             delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
             A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
@@ -77,7 +78,7 @@ for i=2:length(errors_test)
     l=1;
     T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
     backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-    backprop(l).dBeta = sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); %  = sum( (N x ) .x () )
+    backprop(l).dStd = -8^0.5 * mdl(l).beta^1.5 * sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
     %% step size
     mod_when = step_size_params.mod_when;
     if step_size_params.AdaGrad
@@ -92,10 +93,10 @@ for i=2:length(errors_test)
     end
     
     %% gradient step for all layers
-    for j = 1:L
-        mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
-        mdl(j).beta = mdl(j).beta - step_size * backprop(j).dBeta;
-        mdl(j).beta
+    for l = 1:L
+        mdl(l).W = mdl(l).W - step_size * backprop(l).dW;
+        std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step_size * backprop(l).dStd;
+        mdl(l).beta = 1/(2*std_new^2);
     end
     %% print errors
     if sgd_errors
