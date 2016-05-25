@@ -89,8 +89,7 @@ for l = L:-1:2
         % get gradient matrix dV_dW^(l) for parameters W^(l) at layer l
         T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
         backprop(l).dW = 2 * mdl(l).beta * ( fp(l-1).A'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-        delta_total = backprop(l).delta .* fp(l).Delta_tilde;
-        backprop(l).dBeta = sum( sum(delta_total) );
+        backprop(l).dBeta = sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
         % compute delta for next iteration of backprop (i.e. previous layer)
         delta_sum = sum(backprop(l).delta ,2); % (M x 1) <- sum( (M x D^(l)), 2 ) 
         A_x_delta = bsxfun(@times, fp(l-1).A, delta_sum); % (M x D^(L)) = (M x D^(l)) .* (M x 1)
@@ -100,8 +99,7 @@ end
 l=1;
 T_ijm = bsxfun( @times, mdl(l).W, reshape(backprop(l).delta',[1,flip( size(backprop(l).delta) )] ) ); % ( D^(l - 1) x D^(l) x M )
 backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
-delta_total = backprop(l).delta .* fp(l).Delta_tilde;
-backprop(l).dBeta = sum(delta_total(:));
+backprop(l).dBeta = sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
 %% Calcualte numerical derivatives
 eps = 0.0001;
 %numerical = numerical_derivative_dJ_dW( eps, mdl, Xminibatch, Yminibatch);
