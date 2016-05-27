@@ -88,12 +88,12 @@ for i=2:length(errors_test)
     % decay constant infront of step-size algorithm
     if mod(i, step_size_params.Std(l).decay_frequency) == 0
         for l=1:L
-            step_size_params.eta(l).W = step_size_params.W(l).eta/step_size_params.W(l).decay_rate;
+            step_size_params.W(l).eta = step_size_params.W(l).eta/step_size_params.W(l).decay_rate;
         end
     end
     if mod(i, step_size_params.Std(l).decay_frequency) == 0
         for l=1:L
-            step_size_params.eta(l).Std = step_size_params.Std(l).eta/step_size_params.Std(l).decay_rate;
+            step_size_params.Std(l).eta = step_size_params.Std(l).eta/step_size_params.Std(l).decay_rate;
         end
     end
     %% gradient step for all layers
@@ -112,7 +112,7 @@ for i=2:length(errors_test)
         print_every_multiple = step_size_params.print_every_multiple;
         if mod(i, print_every_multiple) == 0 && step_size_params.print_error_to_screen
             % Display the results achieved so far
-            fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', 0, errors_train(i), errors_test(i), step_size_params.W(1).eta, step_size_params.Std(1).eta)
+            fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', i, errors_train(i), errors_test(i), step_size_params.W(1).eta, step_size_params.Std(1).eta)
         end
     end
 end
