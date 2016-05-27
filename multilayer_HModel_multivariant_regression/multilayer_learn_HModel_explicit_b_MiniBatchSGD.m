@@ -26,7 +26,6 @@ for i=2:length(errors_test)
     A = Xminibatch; % ( M x D+1) = (M x D^(0))
     for l = 1:L-1
         A = mdl(l).Act( bsxfun(@plus, A * mdl(l).W, mdl(l).b) ); % (M x D^(l)) = (M x D^(l-1)) x (D^(l-1) x D^(l)) .+ (1 x D^(l))
-        %A = max(0, A * mdl(l).W + repmat(mdl(l).b, batchsize, 1));
         fp(l).A = A; % (M x D^(l))
     end
     % activation for final layer (not special for regression but special for classification as we need to output probability of each class
@@ -58,9 +57,9 @@ for i=2:length(errors_test)
     end
     
     %% gradient step for all layers
-    for j = 1:L
-        mdl(j).W = mdl(j).W - step_size * backprop(j).dW;
-        mdl(j).b = mdl(j).b - step_size * backprop(j).db;
+    for l = 1:L
+        mdl(l).W = mdl(l).W - step_size .* backprop(l).dW .* mdl(l).Wmask;
+        mdl(l).b = mdl(l).b - step_size .* backprop(l).db .* mdl(l).bmask;
     end
     %% print errors
     if sgd_errors
