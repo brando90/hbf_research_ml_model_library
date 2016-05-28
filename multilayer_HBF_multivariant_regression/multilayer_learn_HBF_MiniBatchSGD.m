@@ -74,19 +74,16 @@ for i=2:length(errors_test)
     backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
     backprop(l).dStd = -8^0.5 * mdl(l).beta^1.5 * sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
     %% step size
-    if step_size_params.AdaGrad
+    if step_size_params(1).AdaGrad
         for l=1:L
             G_w = G_w + backprop(l).dW.^2;
             step_size_params.eta(l).W = step_size_params.eta(l).W ./ ( (G_w).^0.5 );
             G_std = G_std + backprop(l).dStd.^2;
             step_size_params.eta(l).Std = step_size_params.eta(l).Std ./ ( (G_std).^0.5 );
         end
-    elseif step_size_params.Momentum
-        % do momentum
-        error('TODO');
     end
     % decay constant infront of step-size algorithm
-    if mod(i, step_size_params.Std(l).decay_frequency) == 0
+    if mod(i, step_size_params.W(l).decay_frequency) == 0
         for l=1:L
             step_size_params.W(l).eta = step_size_params.W(l).eta/step_size_params.W(l).decay_rate;
         end
@@ -97,12 +94,24 @@ for i=2:length(errors_test)
         end
     end
     %% gradient step for all layers
-    for l = 1:L
-        % W = W - eta dJdW
-        mdl(l).W = mdl(l).W - step_size_params.W(l).eta * backprop(l).dW;
-        % std = std - eta dJdstd
-        std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step_size_params.Std(l).eta * backprop(l).dStd;
-        mdl(l).beta = 1/(2*std_new^2);
+    if step(1).Momentum
+        for l = 1:L
+            % v = a*v - eta*dJdW
+            step.W(l).v =  step(l).alpha*step.W(l).v - step.W(l).eta .* backprop(l).dW .* mdl(l).Wmask;
+            mdl(l).W = mdl(l).W + step.W(l).v;
+            % v = a*v - eta*dJdstd
+            step.std(l).v =  step(l).alpha*step.std(l).v - step.std(l).eta .* backprop(l).std .* mdl(l).stdmask;
+            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) + step.std(l).v;
+            mdl(l).std = 1/(2*std_new^2);
+        end
+    else
+        for l = 1:L
+            % W = W - eta dJdW
+            mdl(l).W = mdl(l).W - step_size_params.W(l).eta * backprop(l).dW;
+            % std = std - eta dJdstd
+            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step_size_params.Std(l).eta * backprop(l).dStd;
+            mdl(l).beta = 1/(2*std_new^2);
+        end
     end
     %% print errors
     if sgd_errors
