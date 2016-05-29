@@ -1,5 +1,5 @@
 function [ mdl, errors_train, errors_test ] = multilayer_learn_HModel_explicit_b_MiniBatchSGD( X_train,Y_train, mdl, nb_iterations,batchsize, X_test,Y_test, step, sgd_errors )
-fprintf('sgd_errors = %d',sgd_errors);
+fprintf('sgd_errors = %d \n',sgd_errors);
 [N, ~] = size(X_train);
 [~,D_out] = size(Y_train);
 L = size(mdl,2);
@@ -58,7 +58,7 @@ for i=2:length(errors_test)
     end
     
     %% gradient step for all layers
-    if step.Momentum
+    if step(1).Momentum
         for l = 1:L
             % v = a*v - eta*dJdW
             step.W(l).v =  step.W(l).alpha*step.W(l).v - step.W(l).eta .* backprop(l).dW .* mdl(l).Wmask;
@@ -81,7 +81,7 @@ for i=2:length(errors_test)
         print_every_multiple = step.print_every_multiple;
         if mod(i, print_every_multiple) == 0 && step(1).print_error_to_screen
             % Display the results achieved so far
-            fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size = %f \n', i, errors_train(i), errors_test(i), step.W(l).eta)
+            fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size = %f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step.W(l).eta)
         end
     end
 end

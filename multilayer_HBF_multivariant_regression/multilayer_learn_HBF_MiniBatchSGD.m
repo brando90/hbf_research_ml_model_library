@@ -121,7 +121,7 @@ for i=2:length(errors_test)
         print_every_multiple = step_size_params.print_every_multiple;
         if mod(i, print_every_multiple) == 0 && step_size_params.print_error_to_screen
             % Display the results achieved so far
-            fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', i, errors_train(i), errors_test(i), step_size_params.W(1).eta, step_size_params.Std(1).eta)
+            fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step_size_params.W(1).eta, step_size_params.Std(1).eta)
         end
     end
 end
