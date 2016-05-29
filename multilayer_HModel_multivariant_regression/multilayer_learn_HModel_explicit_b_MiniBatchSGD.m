@@ -1,7 +1,7 @@
 function [ mdl, errors_train, errors_test ] = multilayer_learn_HModel_explicit_b_MiniBatchSGD( X_train,Y_train, mdl, nb_iterations,batchsize, X_test,Y_test, step, sgd_errors )
 fprintf('sgd_errors = %d \n',sgd_errors);
 [N, ~] = size(X_train);
-[~,D_out] = size(Y_train);
+%[~,D_out] = size(Y_train);
 L = size(mdl,2);
 if sgd_errors
     errors_train = zeros(nb_iterations+1,1);
