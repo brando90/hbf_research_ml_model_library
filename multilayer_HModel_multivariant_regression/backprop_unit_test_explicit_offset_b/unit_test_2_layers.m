@@ -20,10 +20,10 @@ mini_batch_indices = ceil(rand(batchsize,1) * N); % M
 Xminibatch =  X_train(mini_batch_indices,:); % ( M x D ) =( M x D^(0) )
 Yminibatch = Y_train(mini_batch_indices,:); % ( M x D^(L) )
 %%
-%Act = relu_func;
-%dAct_ds = dRelu_ds;
-Act = sigmoid_func;
-dAct_ds = dSigmoid_ds;
+Act = relu_func;
+dAct_ds = dRelu_ds;
+%Act = sigmoid_func;
+%dAct_ds = dSigmoid_ds;
 %% make 2 hidden NN model
 L=4;
 nn_params = struct('eps', cell(1,L) );

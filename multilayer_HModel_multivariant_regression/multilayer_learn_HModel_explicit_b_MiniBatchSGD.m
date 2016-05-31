@@ -84,5 +84,9 @@ for i=2:length(errors_test)
             fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; step size = %f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step.W(l).eta)
         end
     end
+    if any( isnan(errors_train) ) || any( isnan(errors_test) )
+        fprintf('---> SOMETHING WAS NaN.');
+        keyboard;
+    end
 end
 end
