@@ -10,6 +10,7 @@ if sgd_errors
     errors_test(1) = compute_Hf_sq_error(X_test,Y_test, mdl);
 end
 i=1;
+fprintf('mdl(1).beta = %f \n', mdl(1).beta);
 fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', 0, errors_train(i), errors_test(i), step.W(1).eta, step.Std(1).eta)
 %% SGD/Mini Batch
 fp = struct('A', cell(1,L), 'Z', cell(1,L), 'Delta_tilde', cell(1,L));
@@ -111,8 +112,9 @@ for i=2:length(errors_test)
         if mod(i, print_every_multiple) == 0 && step.print_error_to_screen
             % Display the results achieved so far
             fprintf('backprop(1).dStd = %f \n', backprop(1).dStd);
+            fprintf('backprop(1).dW = %f \n', norm( backprop(3).dW, 2)^2 );
             fprintf('mdl(1).beta = %f \n', mdl(1).beta);
-            fprintf('max(A) = %f , min(A) = %f \n', max(max(fp(1).A)), min(min(fp(1).A)));
+            fprintf('max(A) = %f , min(A) = %f \n', max(max(fp(3).A)), min(min(fp(3).A)));
             fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step.W(1).eta, step.Std(1).eta)
         end
     end
