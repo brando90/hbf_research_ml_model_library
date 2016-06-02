@@ -1,4 +1,4 @@
-function [mdl, errors_train, errors_test] = special_multilayer_learn_HBF_MiniBatchSGD( X_train,Y_train, mdl, nb_iterations,batchsize, X_test,Y_test, step_size_params, sgd_errors )
+function [mdl, errors_train, errors_test] = special_multilayer_learn_HBF_MiniBatchSGD( X_train,Y_train, mdl, nb_iterations,batchsize, X_test,Y_test, step, sgd_errors )
 fprintf('sgd_errors = %d \n', sgd_errors);
 [N, ~] = size(X_train);
 %[~,D_out] = size(Y_train);
@@ -10,7 +10,7 @@ if sgd_errors
     errors_test(1) = compute_Hf_sq_error(X_test,Y_test, mdl);
 end
 i=1;
-fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', 0, errors_train(i), errors_test(i), step_size_params.W(1).eta, step_size_params.Std(1).eta)
+fprintf ('Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', 0, errors_train(i), errors_test(i), step.W(1).eta, step.Std(1).eta)
 %% SGD/Mini Batch
 fp = struct('A', cell(1,L), 'Z', cell(1,L), 'Delta_tilde', cell(1,L));
 backprop = struct('delta', cell(1,L), 'dW', cell(1,L), 'dStd', cell(1,L));
@@ -63,23 +63,23 @@ for i=2:length(errors_test)
     backprop(l).dW = 2 * mdl(l).beta * ( Xminibatch'*backprop(l).delta - sum( T_ijm, 3) ); % (D^(l-1) x D^(l)) = (D^(l-1) x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ] = (D^(l-1) x M) x (M x D^(l)) .- sum[ (D^(l-1) x D^(l) x M), 3 ]
     backprop(l).dStd = -8^0.5 * mdl(l).beta^1.5 * sum( sum(backprop(l).delta .* fp(l).Delta_tilde) ); % (1 x 1)  = sum(sum( (N x D^(l)) .x (N x D^(l)) ))
     %% step size
-    if step_size_params(1).AdaGrad
+    if step(1).AdaGrad
         for l=1:L
             G_w = G_w + backprop(l).dW.^2;
-            step_size_params.eta(l).W = step_size_params.eta(l).W ./ ( (G_w).^0.5 );
+            step.eta(l).W = step.eta(l).W ./ ( (G_w).^0.5 );
             G_std = G_std + backprop(l).dStd.^2;
-            step_size_params.eta(l).Std = step_size_params.eta(l).Std ./ ( (G_std).^0.5 );
+            step.eta(l).Std = step.eta(l).Std ./ ( (G_std).^0.5 );
         end
     end
     % decay constant infront of step-size algorithm
-    if mod(i, step_size_params.W(l).decay_frequency) == 0
+    if mod(i, step.W(l).decay_frequency) == 0
         for l=1:L
-            step_size_params.W(l).eta = step_size_params.W(l).eta/step_size_params.W(l).decay_rate;
+            step.W(l).eta = step.W(l).eta/step.W(l).decay_rate;
         end
     end
-    if mod(i, step_size_params.Std(l).decay_frequency) == 0
+    if mod(i, step.Std(l).decay_frequency) == 0
         for l=1:L
-            step_size_params.Std(l).eta = step_size_params.Std(l).eta/step_size_params.Std(l).decay_rate;
+            step.Std(l).eta = step.Std(l).eta/step.Std(l).decay_rate;
         end
     end
     %% gradient step for all layers
@@ -96,9 +96,9 @@ for i=2:length(errors_test)
     else
         for l = 1:L
             % W = W - eta dJdW
-            mdl(l).W = mdl(l).W - step_size_params.W(l).eta * backprop(l).dW;
+            mdl(l).W = mdl(l).W - step.W(l).eta * backprop(l).dW;
             % std = std - eta dJdstd
-            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step_size_params.Std(l).eta * backprop(l).dStd;
+            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step.Std(l).eta * backprop(l).dStd;
             mdl(l).beta = 1/(2*std_new^2);
         end
     end
@@ -107,10 +107,10 @@ for i=2:length(errors_test)
         errors_train(i) = compute_Hf_sq_error_vec(X_train,Y_train, mdl);
         errors_test(i) = compute_Hf_sq_error_vec(X_test,Y_test, mdl);
         %if mod(i, ceil(nb_iterations/100)) == 0 && step_size_params.print_error_to_screen
-        print_every_multiple = step_size_params.print_every_multiple;
-        if mod(i, print_every_multiple) == 0 && step_size_params.print_error_to_screen
+        print_every_multiple = step.print_every_multiple;
+        if mod(i, print_every_multiple) == 0 && step.print_error_to_screen
             % Display the results achieved so far
-            fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step_size_params.W(1).eta, step_size_params.Std(1).eta)
+            fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step.W(1).eta, step.Std(1).eta)
         end
     end
 end
