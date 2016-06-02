@@ -34,7 +34,7 @@ for i=2:length(errors_test)
             fp(l).Z = Z;
             fp(l).A = A; % (M x D^(l))
         else
-            A = mdl(l).Act( A * mdl(L).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
+            A = mdl(l).Act( A * mdl(l).W ); % (M x D^(l)) = (M x D^(l-1)+1) x (D^(l-1)+1 x D^(l))
             fp(l).A = A; % (M x D^(l))
         end
     end  
@@ -86,12 +86,12 @@ for i=2:length(errors_test)
     if step(1).Momentum
         for l = 1:L
             % v = a*v - eta*dJdW
-            step.W(l).v =  step(l).alpha*step.W(l).v - step.W(l).eta .* backprop(l).dW .* mdl(l).Wmask;
+            step.W(l).v =  step.W(l).alpha*step.W(l).v - step.W(l).eta .* backprop(l).dW .* mdl(l).Wmask;
             mdl(l).W = mdl(l).W + step.W(l).v;
             % v = a*v - eta*dJdstd
-            step.std(l).v =  step(l).alpha*step.std(l).v - step.std(l).eta .* backprop(l).std .* mdl(l).stdmask;
-            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) + step.std(l).v;
-            mdl(l).std = 1/(2*std_new^2);
+            step.Std(l).v =  step.Std(l).alpha*step.Std(l).v - step.Std(l).eta .* backprop(l).dStd .* mdl(l).Stdmask;
+            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) + step.Std(l).v;
+            mdl(l).beta = 1/(2*std_new^2);
         end
     else
         for l = 1:L
@@ -110,6 +110,9 @@ for i=2:length(errors_test)
         print_every_multiple = step.print_every_multiple;
         if mod(i, print_every_multiple) == 0 && step.print_error_to_screen
             % Display the results achieved so far
+            fprintf('backprop(1).dStd = %f \n', backprop(1).dStd);
+            fprintf('mdl(1).beta = %f \n', mdl(1).beta);
+            fprintf('max(A) = %f , min(A) = %f \n', max(max(fp(1).A)), min(min(fp(1).A)));
             fprintf ('%s: Iter %d. Training zero-one error: %f; Testing zero-one error: %f; eta_W =%f , eta_Std =%f \n', mdl(1).msg, i, errors_train(i), errors_test(i), step.W(1).eta, step.Std(1).eta)
         end
     end
