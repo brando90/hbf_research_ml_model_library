@@ -37,9 +37,9 @@ for l=1:L
     hbf_params(l).eps = 0.01;
 end
 %%
-D_1 = 3;
-D_2 = 4;
-D_3 = 5;
+D_1 = 2;
+D_2 = 3;
+D_3 = 4;
 D_4 = D_out;
 hbf_params(1).W = zeros([D, D_1]);
 hbf_params(2).W = zeros([D_1, D_2]);

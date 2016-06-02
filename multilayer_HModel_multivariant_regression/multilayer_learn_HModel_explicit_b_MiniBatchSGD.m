@@ -41,8 +41,8 @@ for i=2:length(errors_test)
         for l=1:L
             step.W(l).G_w = step.W(l).G_w + backprop(l).dW.^2;
             step.eta(l).W = step.W(l).eta ./ ( (step.W(l).G_w).^0.5 );
-            step.W(l).G_b = step.W(l).G_b + backprop(l).db.^2;
-            step.eta(l).b = step.b(l).eta ./ ( (step.W(l).G_b).^0.5 );
+            step.b(l).G_b = step.b(l).G_b + backprop(l).db.^2;
+            step.b(l).eta = step.b(l).eta ./ ( (step.b(l).G_b).^0.5 );
         end
     end
     % decay constant infront of step-size algorithm
