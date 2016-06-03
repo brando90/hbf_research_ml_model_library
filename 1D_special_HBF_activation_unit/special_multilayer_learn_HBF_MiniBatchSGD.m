@@ -97,9 +97,9 @@ for i=2:length(errors_test)
     else
         for l = 1:L
             % W = W - eta dJdW
-            mdl(l).W = mdl(l).W - step.W(l).eta .* backprop(l).dW;
+            mdl(l).W = mdl(l).W - step.W(l).eta .* backprop(l).dW .* mdl(l).Wmask ;
             % std = std - eta dJdstd
-            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step.Std(l).eta .* backprop(l).dStd;
+            std_new = ( 1/realsqrt(2 * mdl(l).beta) ) - step.Std(l).eta .* backprop(l).dStd .* mdl(l).Stdmask;
             mdl(l).beta = 1/(2*std_new^2);
         end
     end
